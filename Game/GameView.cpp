@@ -227,6 +227,16 @@ void GameView::DrawRoomSetting(bool isHost)
 			col = ( int ) setting.Col;
 			isDirty = false;
 		}
+		ImGui::SameLine();
+		if ( ImGui::Button( "기본 값" ) )
+		{
+			RoomSetting origin{ };
+			maxPlayerCount = ( int ) origin.MaxPlayerCount;
+			row = ( int ) origin.Row;
+			col = ( int ) origin.Col;
+			GameCore::ActiveRoom->SetRoomSetting( origin );
+			isDirty = false;
+		}
 	}
 	ImGui::PopID();
 
