@@ -10,8 +10,8 @@ public:
 	{
 		std::string Label;
 		ImVec2 Size;
-		UINT ChildFlags;
-		UINT WindowFlags;
+		UINT ChildFlags = 0;
+		UINT WindowFlags = 0;
 	};
 	
 public:

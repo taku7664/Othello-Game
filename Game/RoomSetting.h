@@ -1,5 +1,4 @@
 #pragma once
-
 struct RoomSetting
 {
 	size_t		MaxPlayerCount = 2;

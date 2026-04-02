@@ -3,25 +3,34 @@
 
 class Player;
 
+
 class GameRoom : public IGameRoom
 {
+	enum RefreshFlag
+	{
+		REFRESH_FLAG_NONE = 0 ,
+		REFRESH_FLAG_TITLE = 1 << 0 ,
+		REFRESH_FLAG_ROOM_SETTING = 1 << 1,
+		REFRESH_FLAG_ROOM_STATE = 1 << 2,
+	};
 public:
 	GameRoom();
 	virtual ~GameRoom();
 
 public:
 	void Update() override;
+	void RefreshFromPacket(const Packet::Com_RoomRefreshed& packet, bool notify = true);
 
 	void Clear();
 
 public:
-	void SetRoomTitle(const char* title) override;
+	void SetRoomTitle(const char* title, bool dirty = true) override;
 	const std::string& GetRoomTitle() const override;
 
-	void SetMaxPlayerCount(size_t count) override;
-	size_t GetMaxPlayerCount() const override;
+	void SetRoomSetting( const RoomSetting& setting , bool dirty = true ) override;
+	const RoomSetting& GetRoomSetting() const override;
 
-	void SetRoomState(RoomState state);
+	void SetRoomState(RoomState state , bool dirty = true );
 	RoomState GetRoomState() const override;
 
 	bool CanStartGame() const override;
@@ -45,8 +54,10 @@ private:
 	
 protected:
 	std::string		m_roomTitle;
+	RoomSetting		m_roomSetting;
 	RoomState		m_roomState;
-	size_t          m_maxPlayerCount;
+	BitFlag			m_refreshFlags = 0;
+
 
 	Player* m_hostPlayer;
 	Player* m_localPlayer;

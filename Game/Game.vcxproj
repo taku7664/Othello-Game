@@ -131,6 +131,7 @@
     <ClInclude Include="ChatManager.h" />
     <ClInclude Include="ErrorView.h" />
     <ClInclude Include="GameView.h" />
+    <ClInclude Include="imgui_stdlib.h" />
     <ClInclude Include="MasterWindow.h" />
     <ClInclude Include="ImButton.h" />
     <ClInclude Include="ImCustomWindow.h" />
@@ -167,6 +168,7 @@
     <ClInclude Include="PlayerData.h" />
     <ClInclude Include="RenderManager.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="RoomSetting.h" />
     <ClInclude Include="RoomState.h" />
     <ClInclude Include="ServerManager.h" />
     <ClInclude Include="targetver.h" />
@@ -189,6 +191,9 @@
     <ClCompile Include="ChatManager.cpp" />
     <ClCompile Include="ErrorView.cpp" />
     <ClCompile Include="GameView.cpp" />
+    <ClCompile Include="imgui_stdlib.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="MasterWindow.cpp" />
     <ClCompile Include="ImButton.cpp" />
     <ClCompile Include="ImCustomWindow.cpp" />

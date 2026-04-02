@@ -240,6 +240,12 @@
     <ClInclude Include="ErrorView.h">
       <Filter>Window\View</Filter>
     </ClInclude>
+    <ClInclude Include="RoomSetting.h">
+      <Filter>Framework\Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_stdlib.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -379,6 +385,9 @@
     </ClCompile>
     <ClCompile Include="ErrorView.cpp">
       <Filter>Window\View</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_stdlib.cpp">
+      <Filter>ThirdParty</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

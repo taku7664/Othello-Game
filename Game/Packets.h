@@ -6,7 +6,7 @@ namespace Packet
 	struct C2S_JoinRequest
 	{
 		GUID Guid			= {};
-		char Nickname[50]	= { '0', };
+		char Nickname[64]	= { '0', };
 		bool IsHost			= false;
 	};
 	struct C2S_LeaveRequest
@@ -28,14 +28,9 @@ namespace Packet
 	{
 		int  ConnectionID = 0;
 		GUID Guid = {};
-		char Nickname[50] = { '0', };
+		char Nickname[64] = { '0', };
 		bool IsHost = false;
 		bool IsNew = true;
-	};
-	struct S2C_RoomAccepted
-	{
-		char Title[50] = { '0', };
-		int  RoomSetting = 0;
 	};
 	struct S2C_PlayerLeaved
 	{
@@ -60,7 +55,6 @@ namespace Packet
 	{
 		GUID FromGuid = GUID_NULL;
 	};
-
 	struct Com_PlayerRefreshed
 	{
 		GUID DestGuid = GUID_NULL;
@@ -68,7 +62,13 @@ namespace Packet
 		char Nickname[50] = { '0', };
 		ColorType Color = ColorType::None;
 	};
-
-	
+	struct Com_RoomRefreshed
+	{
+		bool        IsNew = false;
+		BitFlag		RefreshFlags = 0;
+		char		Title[ 64 ] = { '0', };
+		RoomSetting	Setting = {};
+		RoomState	State = RoomState::ROOM_STATE_NONE;
+	};
 }
 

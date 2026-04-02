@@ -24,12 +24,12 @@ private:
 
 private:
 	void Handle_S2C_PlayerJoined(PacketHeader header, const Packet::S2C_PlayerJoined* body);
-	void Handle_S2C_RoomAccepted(PacketHeader header, const Packet::S2C_RoomAccepted* body);
 	void Handle_S2C_PlayerLeaved(PacketHeader header, const Packet::S2C_PlayerLeaved* body);
 	void Handle_S2C_PlayerKicked(PacketHeader header, const Packet::S2C_PlayerKicked* body);
 	void Handle_S2C_PlaceStone(PacketHeader header, const Packet::S2C_PlaceStone* body);
 	void Handle_Com_ChatMessage(PacketHeader header, const Packet::Com_ChatMessage* body);
 	void Handle_Com_PlayerRefreshed(PacketHeader header, const Packet::Com_PlayerRefreshed* body);
+	void Handle_Com_RoomRefreshed(PacketHeader header, const Packet::Com_RoomRefreshed* body);
 
 
 private:

@@ -165,12 +165,12 @@ void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 	Debug::Log log("CClientNetwork::Handle_Packet()");
 	std::string typeName(header.TypeName);
 	PACKET_IF(S2C_PlayerJoined)
-	PACKET_IF(S2C_RoomAccepted)
 	PACKET_IF(S2C_PlayerLeaved)
 	PACKET_IF(S2C_PlayerKicked)
 	PACKET_IF(S2C_PlaceStone)
 	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(Com_PlayerRefreshed)
+	PACKET_IF(Com_RoomRefreshed)
 }
 
 void CClientNetwork::SendToHost()
@@ -221,16 +221,6 @@ void CClientNetwork::Handle_S2C_PlayerJoined(PacketHeader header, const Packet::
 		}
 	}
 }
-
-void CClientNetwork::Handle_S2C_RoomAccepted(PacketHeader header, const Packet::S2C_RoomAccepted* body)
-{
-	Debug::Log log("CClientNetwork::Handle_S2C_RoomAccepted()");
-	if (IGameRoom* gameRoom = GameCore::ActiveRoom)
-	{
-		gameRoom->SetRoomTitle(body->Title);
-	}
-}
-
 
 void CClientNetwork::Handle_S2C_PlayerLeaved(PacketHeader header, const Packet::S2C_PlayerLeaved* body)
 {
@@ -291,8 +281,17 @@ void CClientNetwork::Handle_Com_PlayerRefreshed(PacketHeader header, const Packe
 {
 	Debug::Log log( "CClientNetwork::Handle_Com_PlayerRefreshed()" );
 
-	if(Player* dest = dynamic_cast<Player*>(GameCore::GetPlayerFromGuid(body->DestGuid)))
+	if (Player* dest = dynamic_cast<Player*>(GameCore::GetPlayerFromGuid(body->DestGuid)))
 	{
 		dest->RefreshFromPacket(*body);
+	}
+}
+
+void CClientNetwork::Handle_Com_RoomRefreshed( PacketHeader header , const Packet::Com_RoomRefreshed* body )
+{
+	Debug::Log log( "CClientNetwork::Handle_Com_RoomRefreshed()" );
+	if (GameRoom* gameRoom = dynamic_cast<GameRoom*>(GameCore::ActiveRoom))
+	{
+		gameRoom->RefreshFromPacket(*body, !body->IsNew);
 	}
 }

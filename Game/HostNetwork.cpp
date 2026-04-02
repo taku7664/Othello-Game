@@ -199,8 +199,8 @@ void CHostNetwork::HandlePacket(Connection& connection, PacketHeader header, con
 
 	PACKET_IF(C2S_JoinRequest)
 	PACKET_IF(C2S_LeaveRequest)
-	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(C2S_PlaceStone)
+	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(Com_PlayerRefreshed)
 }
 
@@ -210,12 +210,16 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
     if (IGameRoom* gameRoom = GameCore::ActiveRoom)
     {
         {
-            Packet::S2C_RoomAccepted packet;
+            Packet::Com_RoomRefreshed packet;
+			packet.IsNew = true;
+			packet.RefreshFlags = ~0;
+			packet.Setting = gameRoom->GetRoomSetting();
+			packet.State = gameRoom->GetRoomState();
             strcpy_s(packet.Title,
                 gameRoom->GetRoomTitle().length() + 1,
                 gameRoom->GetRoomTitle().c_str()
             );
-            connection.PushPacket<Packet::S2C_RoomAccepted>(packet);
+            connection.PushPacket<Packet::Com_RoomRefreshed>(packet);
         }
         {
             size_t currPlayerCount = gameRoom->GetCurrentPlayerCount();

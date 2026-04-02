@@ -14,15 +14,16 @@ private:
 	virtual void Update() = 0;
 
 public:
+
 	/// <summary> 게임 방의 타이틀을 변경합니다. </summary>
-	virtual void SetRoomTitle(const char* title) = 0;
+	virtual void SetRoomTitle(const char* title, bool dirty = true) = 0;
 	/// <summary> 게임 방의 타이틀을 반환합니다. </summary>
 	virtual const std::string& GetRoomTitle() const = 0;
 
-	/// <summary> 게임 방의 최대 플레이어 수를 설정합니다. </summary>
-	virtual void SetMaxPlayerCount(size_t count) = 0;
-	/// <summary> 게임 방의 최대 플레이어 수를 반환합니다. </summary>
-	virtual size_t GetMaxPlayerCount() const = 0;
+	/// <summary> 게임 방의 세팅을 설정합니다. </summary>
+	virtual void SetRoomSetting(const RoomSetting& setting, bool dirty = true) = 0;
+	/// <summary> 게임 방의 세팅을 반환합니다. </summary>
+	virtual const RoomSetting& GetRoomSetting() const = 0;
 
 	/// <summary> 게임 방의 상태를 반환합니다. </summary>
 	virtual RoomState GetRoomState() const = 0;

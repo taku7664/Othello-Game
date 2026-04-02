@@ -12,10 +12,13 @@ public:
 
 private:
 	void ShowGame();
-	void DrawSettingBar();
+	void DrawUpperGameBar();
+	void DrawMainGameBar();
+	void DrawRoomSetting(bool isHost);
 
 	void ShowChat();
 	void DrawPlayerList();
+	void DrawPlayerPopup(IPlayer* player);
 	void DrawChatBoard();
 
 private:
