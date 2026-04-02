@@ -12,6 +12,8 @@ public:
 	virtual void Finalize() = 0;
 	virtual void Update() = 0;
 
+	unsigned short GetPort() const;
+
 protected:
 	unsigned short	m_port;
 };

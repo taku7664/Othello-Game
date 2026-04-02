@@ -158,7 +158,7 @@ void GameView::DrawRoomSetting(bool isHost)
 		ImGui::Utillity::TextWithVerticalSeparator( "포트 번호" , labelX );
 		{
 			ImGui::Utillity::DisableScope disableScope;
-			int port = ( int ) GameCore::HostServer->GetPort();
+			int port = GameCore::ClientServer ? (int)GameCore::ClientServer->GetPort() : 0;
 			ImGui::InputInt( "##room_port" , &port , 0 );
 		}
 		if ( ImGui::Button( "변경" ) )
@@ -294,7 +294,7 @@ void GameView::DrawPlayerList()
 	ImGuiStyle&		style		= ImGui::GetStyle();
 	const float		rounding	= 3.0f;
 	const ImVec2	availSize	= ImGui::GetContentRegionAvail();
-	const char*		popupID		= "##PlayerPopup";
+	const char*		popupID		= "##player_popup";
 	if (GameCore::ActiveRoom)
 	{
 		size_t playerCount = GameCore::ActiveRoom->GetCurrentPlayerCount();
@@ -323,7 +323,8 @@ void GameView::DrawPlayerList()
 				styleBuilder.PushStyleColor( ImGuiCol_ButtonHovered , hoveredColor );
 				styleBuilder.PushStyleColor( ImGuiCol_ButtonActive , activeColor );
 				ImGui::PushID( (int)i );
-				bool clicked = ImGui::Button( "##Players", ImVec2(availSize.x, 0) );
+				bool clickedLeft = ImGui::Button( "##Players", ImVec2(availSize.x, 0) );
+				bool clickedRight = ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right);
 				ImGui::SameLine( cursorPos.x + style.FramePadding.x );
 				{
 					ImGui::Utillity::StyleBuilder styleBuilder;
@@ -337,11 +338,11 @@ void GameView::DrawPlayerList()
 					ImGui::TextUnformatted( label.c_str() );
 				}
 				styleBuilder.PopStyle();
-				if (GameCore::HostServer && clicked)
+				if (GameCore::HostServer && (clickedLeft || clickedRight))
 				{
 					ImGui::OpenPopup(popupID);
 				}
-				if (GameCore::HostServer && ImGui::BeginPopup(popupID))
+				if (ImGui::BeginPopup(popupID))
 				{
 					DrawPlayerPopup(player);
 					ImGui::EndPopup();
@@ -406,7 +407,7 @@ void GameView::DrawChatBoard()
 	const ImVec2	spacing			= style.ItemSpacing;
 	const auto&		message			= GameCore::ChatManager.GetChatMessages();
 	const float		rounding		= 3.0f;
-	
+	const char*		popupID			= "##player_popup";
 
 	clipper.Begin( static_cast< int >( message.size() ) , ImGui::GetFrameHeight() );
 	while ( clipper.Step() )
@@ -414,20 +415,20 @@ void GameView::DrawChatBoard()
 		for ( int i = clipper.DisplayStart; i < clipper.DisplayEnd; ++i )
 		{
 			ImGui::PushID( i );
-			if ( message[ i ].From == GUID_NULL )
+			if ( message[i].From == GUID_NULL )
 			{
-				if ( message[ i ].Chat == "---" )
+				if ( message[i].Chat == "---" )
 				{
 					ImGui::Separator();
 				}
 			}
-			const bool		isLocal			= GameCore::ActiveRoom && message[ i ].From == GameCore::GetLocalPlayer()->GetGUID();
+			IPlayer*		destPlayer		= GameCore::GetPlayerFromGuid(message[i].From);
+			const bool		isLocal			= destPlayer ? destPlayer->IsLocal() : false;
 			const ImU32		defaultColor	= isLocal ? IM_COL32( 255 , 255 , 255 , 0 ) : IM_COL32( 255 , 255 , 255 , 0 );
 			const ImU32		hoveredColor	= isLocal ? IM_COL32( 255 , 255 , 255 , 0 ) : IM_COL32( 255 , 255 , 255 , 0 );
 			const ImU32		activeColor		= isLocal ? IM_COL32( 255 , 255 , 255 , 0 ) : IM_COL32( 255 , 255 , 255 , 0 );
-			const ImVec4	textColor		= ImGui::Utillity::ColorFromGuid( message[ i ].From );
-			const ImVec2	headerSize		= ImGui::CalcTextSize( message[ i ].Header.c_str() ) + ImVec2( spacing.x , spacing.y );
-
+			const ImVec4	textColor		= ImGui::Utillity::ColorFromGuid( message[i].From );
+			const ImVec2	headerSize		= ImGui::CalcTextSize( message[i].Header.c_str() ) + ImVec2( spacing.x , spacing.y );
 			{
 				ImGui::Utillity::StyleBuilder styleBuilder;
 				styleBuilder.PushStyleVar( ImGuiStyleVar_FrameRounding, rounding);
@@ -436,12 +437,21 @@ void GameView::DrawChatBoard()
 				styleBuilder.PushStyleColor( ImGuiCol_ButtonActive, hoveredColor);
 				styleBuilder.PushStyleColor( ImGuiCol_Text, textColor);
 				ImGui::Button(message[i].Header.c_str(), headerSize);
+				if(destPlayer && ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+				{
+					ImGui::OpenPopup(popupID);
+				}
+				if (ImGui::BeginPopup(popupID))
+				{
+					DrawPlayerPopup(destPlayer);
+					ImGui::EndPopup();
+				}
 			}
 			ImGui::SameLine();
 			{
 				ImGui::Utillity::StyleBuilder styleBuilder;
 				styleBuilder.PushStyleColor( ImGuiCol_Text, IM_COL32( 255 , 255 , 255 , 255 ));
-				ImGui::TextWrapped( message[ i ].Chat.c_str() );
+				ImGui::TextWrapped( message[i].Chat.c_str() );
 			}
 			ImGui::PopID();
 		}

@@ -5,3 +5,8 @@ CNetwork::CNetwork(unsigned short port)
 	: m_port(port)
 {
 }
+
+unsigned short CNetwork::GetPort() const
+{
+	return m_port;
+}

@@ -12,8 +12,6 @@ public:
     void Finalize() override;
     void Update() override;
 
-	unsigned short GetPort() const;
-
 	template<typename PacketT>
 	void BroadCast(const PacketT& packet , size_t bodySize = 0);
 	template<typename PacketT>
