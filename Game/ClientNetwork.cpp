@@ -168,6 +168,7 @@ void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 	PACKET_IF(S2C_PlayerLeaved)
 	PACKET_IF(S2C_PlayerKicked)
 	PACKET_IF(S2C_PlaceStone)
+	PACKET_IF(Com_Error)
 	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(Com_PlayerRefreshed)
 	PACKET_IF(Com_RoomRefreshed)
@@ -213,6 +214,7 @@ void CClientNetwork::Handle_S2C_PlayerJoined(PacketHeader header, const Packet::
 				GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
 				log.WriteLineW( Debug::LOG_INFO , msg.c_str() );
 			}
+			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_GAME );
 		}
 		else
 		{
@@ -256,6 +258,7 @@ void CClientNetwork::Handle_S2C_PlayerKicked( PacketHeader header , const Packet
 void CClientNetwork::Handle_S2C_PlaceStone( PacketHeader header , const Packet::S2C_PlaceStone* body )
 {
 	Debug::Log log("CClientNetwork::HandlS2C_PlaceStone()");
+
 	if (IGameRoom* gameRoom = GameCore::ActiveRoom)
 	{
 		if (IPlayer* player = gameRoom->GetPlayerFromGuid(body->Guid))
@@ -265,6 +268,16 @@ void CClientNetwork::Handle_S2C_PlaceStone( PacketHeader header , const Packet::
 			board.PlaceStone(color, body->Row, body->Col);
 		}
 	}
+}
+
+void CClientNetwork::Handle_Com_Error( PacketHeader header , const Packet::Com_Error* body )
+{
+	Debug::Log log("CClientNetwork::Handle_Com_Error()");
+
+	const char* raw = reinterpret_cast<const char*>(body);
+	const size_t offset = sizeof(Packet::Com_ChatMessage );
+	const char* desc = reinterpret_cast<const char*>(raw + offset);
+	GameCore::GameManager.LeaveRoom(body->errTitle, desc);
 }
 
 void CClientNetwork::Handle_Com_ChatMessage(PacketHeader header, const Packet::Com_ChatMessage* body)

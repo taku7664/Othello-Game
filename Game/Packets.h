@@ -51,6 +51,10 @@ namespace Packet
 	////////////////////////
 	/// Common
 	////////////////////////
+	struct Com_Error
+	{
+		char errTitle[64] = { '0', };
+	};
 	struct Com_ChatMessage
 	{
 		GUID FromGuid = GUID_NULL;
@@ -59,14 +63,14 @@ namespace Packet
 	{
 		GUID DestGuid = GUID_NULL;
 		BitFlag RefreshFlags = 0;
-		char Nickname[50] = { '0', };
+		char Nickname[64] = { '0', };
 		ColorType Color = ColorType::None;
 	};
 	struct Com_RoomRefreshed
 	{
 		bool        IsNew = false;
 		BitFlag		RefreshFlags = 0;
-		char		Title[ 64 ] = { '0', };
+		char		Title[64] = { '0', };
 		RoomSetting	Setting = {};
 		RoomState	State = RoomState::ROOM_STATE_NONE;
 	};
