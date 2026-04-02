@@ -155,6 +155,12 @@ void GameView::DrawRoomSetting(bool isHost)
 		{
 			isDirty = true;
 		}
+		ImGui::Utillity::TextWithVerticalSeparator( "포트 번호" , labelX );
+		{
+			ImGui::Utillity::DisableScope disableScope;
+			int port = ( int ) GameCore::HostServer->GetPort();
+			ImGui::InputInt( "##room_port" , &port , 0 );
+		}
 		if ( ImGui::Button( "변경" ) )
 		{
 			if ( isDirty )

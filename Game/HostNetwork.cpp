@@ -104,6 +104,11 @@ void CHostNetwork::Update()
     m_connections.erase(remiveIt, m_connections.end());
 }
 
+unsigned short CHostNetwork::GetPort() const
+{
+	return m_port;
+}
+
 void CHostNetwork::Close()
 {
     closesocket(m_socket);
