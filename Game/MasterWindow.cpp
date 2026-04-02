@@ -9,9 +9,7 @@ void CMasterWindow::OnCreate()
 {
 	SetTitle( "게임" );
 
-	UINT flags;
-
-	flags = 
+	UINT flags = 
 		ImGuiWindowFlags_NoTitleBar | 
 		ImGuiWindowFlags_NoCollapse | 
 		ImGuiWindowFlags_NoResize |

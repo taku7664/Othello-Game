@@ -3,6 +3,7 @@
 #include "IGameBoard.h"
 #include "IPlayer.h"
 #include "GameRoom.h"
+#include "DebugWindow.h"
 
 CGameManager::CGameManager()
 	: m_playerProfile()
@@ -11,13 +12,8 @@ CGameManager::CGameManager()
 
 void CGameManager::Initialize()
 {
-    GameCore::CommandAction.RegisterCommand("/title", [this](const std::string& value) {
-        m_gameRoom.SetRoomTitle(value.c_str());
-        std::string msg = std::format(
-            "방 제목을 \"{}\"(으)로 변경했습니다.",
-            value
-        );
-        GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str());
+    GameCore::CommandAction.RegisterCommand("/debug", [this](const std::string& value) {
+		GameCore::ImGuiManager.CreateImWindow<CDebugWindow>( "debug" );
         });
 
     GameCore::CommandAction.RegisterCommand("/nickname", [this](const std::string& value) {
@@ -31,23 +27,14 @@ void CGameManager::Initialize()
 			GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str());
 		}
         });
-	GameCore::CommandAction.RegisterCommand( "/color" , [ this ] ( const std::string& value ) {
-		if ( GameCore::ActiveRoom )
-		{
-			if(value == "black") 
-			{
-				GameCore::GetLocalPlayer()->SetColorType(ColorType::Black);
-			}
-			else if(value == "white")
-			{
-				GameCore::GetLocalPlayer()->SetColorType(ColorType::White);
-			}
-		}
-		} );
 }
 
 void CGameManager::Finalize()
 {
+	if (GameCore::ActiveRoom)
+	{
+		LeaveRoom();
+	}
 }
 
 void CGameManager::Update()

@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="BoardCell.h" />
     <ClInclude Include="ChatManager.h" />
+    <ClInclude Include="DebugWindow.h" />
     <ClInclude Include="ErrorView.h" />
     <ClInclude Include="GameView.h" />
     <ClInclude Include="imgui_stdlib.h" />
@@ -189,6 +190,7 @@
   <ItemGroup>
     <ClCompile Include="BoardCell.cpp" />
     <ClCompile Include="ChatManager.cpp" />
+    <ClCompile Include="DebugWindow.cpp" />
     <ClCompile Include="ErrorView.cpp" />
     <ClCompile Include="GameView.cpp" />
     <ClCompile Include="imgui_stdlib.cpp">

@@ -246,6 +246,9 @@
     <ClInclude Include="imgui_stdlib.h">
       <Filter>ThirdParty</Filter>
     </ClInclude>
+    <ClInclude Include="DebugWindow.h">
+      <Filter>Window</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -388,6 +391,9 @@
     </ClCompile>
     <ClCompile Include="imgui_stdlib.cpp">
       <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugWindow.cpp">
+      <Filter>Window</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
