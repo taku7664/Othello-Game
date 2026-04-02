@@ -81,7 +81,7 @@ void CHostNetwork::Update()
 
     timeval tv{};
     tv.tv_sec = 0;
-    tv.tv_usec = 10;
+    tv.tv_usec = 0;
     int activity = select(0, &readfds, &writefds, nullptr, &tv);
     if (SOCKET_ERROR == activity)
     {

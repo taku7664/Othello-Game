@@ -32,7 +32,6 @@ private:
 private:
 	void ShowMenuBar();
 	void ShowFrame(FrameType frame, const ImVec2& cursorPos, const ImVec2& frameSize);
-	float GetFrameTransitionEaseFactor();
 
 private:
 	FrameType m_curFrame = FRAME_TITLE;

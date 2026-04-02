@@ -42,11 +42,11 @@ void GameView::OnShow( Context& context )
 		ShowGame();
 	}
 	ImGui::EndChild();
-
+	
 	ShowColumnPlitter(width);
 	width = ImClamp( width , 200.0f , displaySize.x - 200.0f );
 	ImGui::SameLine();
-
+	
 	ImGui::BeginChild( "Chat" , ImVec2( 0 , 0 ) , ImGuiChildFlags_Borders , ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse );
 	{
 		ShowChat();

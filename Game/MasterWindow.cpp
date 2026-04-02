@@ -93,8 +93,8 @@ void CMasterWindow::OnRenderStay()
 			m_frameTransitionTick = 0.0f;
 			m_viewTable[ m_prevFrame ].View->OnHide();
 		}
-
-		const float ease = GetFrameTransitionEaseFactor();
+		float t = 1.0f - ( m_frameTransitionTick / m_frameTransitionTime );
+		const float ease = easeInOutBack( t );
 		const float width = frameSize.x;
 
 		const int prevIndex = static_cast< int >( m_prevFrame );
@@ -147,10 +147,4 @@ void CMasterWindow::ChangeFrame( FrameType frame)
 	m_curFrame = frame;
 	m_frameTransitionTick = m_frameTransitionTime;
 	m_viewTable[m_curFrame].View->OnVisible();
-}
-
-float CMasterWindow::GetFrameTransitionEaseFactor()
-{
-	float t = 1.0f - ( m_frameTransitionTick / m_frameTransitionTime );
-	return easeInOutBack( t );
 }

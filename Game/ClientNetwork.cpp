@@ -129,7 +129,7 @@ void CClientNetwork::Update()
 
 	timeval tv{};
 	tv.tv_sec = 0;
-	tv.tv_usec = 10000;
+	tv.tv_usec = 0;
 
 	int ret = select(0, &readfds, &writefds, nullptr, &tv);
 	if (ret == SOCKET_ERROR)
