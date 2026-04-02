@@ -7,7 +7,7 @@ public:
     BitFlag(unsigned int flags) : mBits(flags) {}
 
 public:
-    // 기본 조작
+    inline bool Empty() { return mBits == 0; }
     inline void Set(unsigned int flags) { mBits = flags; }
     inline void Add(unsigned int flags) { mBits |= flags; }
     inline void Remove(unsigned int flags) { mBits &= ~flags; }
