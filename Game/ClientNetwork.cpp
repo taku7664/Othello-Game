@@ -239,16 +239,16 @@ void CClientNetwork::Handle_S2C_PlayerLeaved(PacketHeader header, const Packet::
 void CClientNetwork::Handle_S2C_PlayerKicked( PacketHeader header , const Packet::S2C_PlayerKicked* body )
 {
 	Debug::Log log( "CClientNetwork::Handle_S2C_PlayerKicked()" );
-	if ( IPlayer* player = GameCore::GetLocalPlayer() )
+	if ( IPlayer* local = GameCore::GetLocalPlayer() )
 	{
-		if ( player->GetGUID() == body->Guid )
+		if ( local->GetGUID() == body->Guid )
 		{
 			GameCore::GameManager.LeaveRoom( "방에서 퇴장하셨습니다." , "강퇴" );
 		}
-		else
+		else if( IPlayer* dest = GameCore::GetPlayerFromGuid( body->Guid ) )
 		{
 			std::string msg = std::format( "{}님이 강퇴당하셨습니다." ,
-				player->GetNickName() );
+				dest->GetNickName() );
 			GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
 			GameCore::ActiveRoom->RemovePlayer( body->Guid );
 		}
@@ -275,9 +275,9 @@ void CClientNetwork::Handle_Com_Error( PacketHeader header , const Packet::Com_E
 	Debug::Log log("CClientNetwork::Handle_Com_Error()");
 
 	const char* raw = reinterpret_cast<const char*>(body);
-	const size_t offset = sizeof(Packet::Com_ChatMessage );
+	const size_t offset = sizeof(Packet::Com_Error);
 	const char* desc = reinterpret_cast<const char*>(raw + offset);
-	GameCore::GameManager.LeaveRoom(body->errTitle, desc);
+	GameCore::GameManager.LeaveRoom(body->ErrTitle, desc);
 }
 
 void CClientNetwork::Handle_Com_ChatMessage(PacketHeader header, const Packet::Com_ChatMessage* body)
@@ -285,7 +285,7 @@ void CClientNetwork::Handle_Com_ChatMessage(PacketHeader header, const Packet::C
 	Debug::Log log("CClientNetwork::Handle_Com_ChatMessage()");
 
 	const char* raw = reinterpret_cast<const char*>(body);
-	const size_t offset = sizeof(Packet::Com_ChatMessage );
+	const size_t offset = sizeof(Packet::Com_ChatMessage);
 	const char* msg = reinterpret_cast<const char*>(raw + offset);
 	GameCore::ChatManager.PushChatMessage(body->FromGuid, msg);
 }
@@ -303,6 +303,7 @@ void CClientNetwork::Handle_Com_PlayerRefreshed(PacketHeader header, const Packe
 void CClientNetwork::Handle_Com_RoomRefreshed( PacketHeader header , const Packet::Com_RoomRefreshed* body )
 {
 	Debug::Log log( "CClientNetwork::Handle_Com_RoomRefreshed()" );
+
 	if (GameRoom* gameRoom = dynamic_cast<GameRoom*>(GameCore::ActiveRoom))
 	{
 		gameRoom->RefreshFromPacket(*body, !body->IsNew);

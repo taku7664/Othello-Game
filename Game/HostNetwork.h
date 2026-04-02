@@ -12,10 +12,10 @@ public:
     void Finalize() override;
     void Update() override;
 
-	template<typename T>
-	void BroadCast(const T& packet , size_t bodySize = 0);
-	template<typename T>
-	void SendToConnection( int id , const T& packet , size_t bodySize = 0 );
+	template<typename PacketT>
+	void BroadCast(const PacketT& packet , size_t bodySize = 0);
+	template<typename PacketT>
+	void SendToConnection( int id , const PacketT& packet , size_t bodySize = 0 );
 
 private:
     void Close();
@@ -37,8 +37,8 @@ private:
     std::vector<Connection> m_connections;
 };
 
-template<typename T>
-inline void CHostNetwork::BroadCast( const T& packet , size_t bodySize )
+template<typename PacketT>
+inline void CHostNetwork::BroadCast( const PacketT& packet , size_t bodySize )
 {
 	for(Connection& connection : m_connections)
 	{
@@ -46,8 +46,8 @@ inline void CHostNetwork::BroadCast( const T& packet , size_t bodySize )
 	}
 }
 
-template<typename T>
-inline void CHostNetwork::SendToConnection( int id , const T& packet , size_t bodySize )
+template<typename PacketT>
+inline void CHostNetwork::SendToConnection( int id , const PacketT& packet , size_t bodySize )
 {
 	for ( Connection& connection : m_connections )
 	{

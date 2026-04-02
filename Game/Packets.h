@@ -53,7 +53,7 @@ namespace Packet
 	////////////////////////
 	struct Com_Error
 	{
-		char errTitle[64] = { '0', };
+		char ErrTitle[64] = { '0', };
 	};
 	struct Com_ChatMessage
 	{

@@ -271,10 +271,10 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
 
 			std::vector<char> buffer(bodySize);
 			Packet::Com_Error* packet = reinterpret_cast<Packet::Com_Error*>(buffer.data());
-			strcpy_s(packet->errTitle, errTitle.length() + 1, errTitle.c_str());
+			strcpy_s(packet->ErrTitle, errTitle.length() + 1, errTitle.c_str());
 			memcpy(buffer.data() + sizeof(Packet::Com_Error), errDesc.data(), descSize);
 
-			connection.PushPacket(packet);
+			connection.PushPacket(*packet, bodySize);
 		}
     }
 }

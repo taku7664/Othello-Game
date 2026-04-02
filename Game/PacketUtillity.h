@@ -16,6 +16,11 @@ struct PacketHeader
 	size_t	BodySize = 0;
 };
 
+template<typename T>
+concept PacketT =
+!std::is_pointer_v<std::remove_cvref_t<T>> &&
+std::is_trivially_copyable_v<std::remove_cvref_t<T>>;
+
 inline PacketHeader GetHeaderFromPacketBuffer(const char* pBuffer)
 {
 	if (pBuffer == nullptr)

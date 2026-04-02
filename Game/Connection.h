@@ -12,8 +12,8 @@ public:
 	Connection(Connection&& other) noexcept;
 	Connection& operator=(Connection&& other) noexcept;
 
-	template<typename T>
-	void PushPacket(const T& body, size_t bodySize = 0);
+	template<typename PacketT>
+	void PushPacket(const PacketT& body, size_t bodySize = 0);
 	void SendPackets();
 	void RecievePackets();
 	void ResetConnection();
@@ -26,14 +26,14 @@ public:
 	Buffer					RecvBuffer;
 };
 
-template<typename T>
-inline void Connection::PushPacket(const T& body, size_t bodySize)
+template<typename PacketT>
+inline void Connection::PushPacket(const PacketT& body, size_t bodySize)
 {
 	const size_t headerSize = sizeof(PacketHeader);
-	bodySize = (bodySize == 0) ? sizeof(T) : bodySize;
+	bodySize = (bodySize == 0) ? sizeof(PacketT) : bodySize;
 
 	PacketHeader header {};
-	const char* name = typeid( T ).name() + 15;
+	const char* name = typeid( PacketT ).name() + 15;
 	strcpy_s(header.TypeName, sizeof(header.TypeName), name);
 	header.BodySize = bodySize;
 

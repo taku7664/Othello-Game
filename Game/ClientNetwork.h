@@ -12,8 +12,8 @@ public:
 	void Finalize() override;
 	void Update() override;
 
-	template<typename T>
-	void SendPacketToServer(const T& packet, size_t bodySize = 0);
+	template<typename PacketT>
+	void SendPacketToServer(const PacketT& packet, size_t bodySize = 0);
 
 	int GetConnectionID() const;
 
@@ -39,8 +39,8 @@ private:
 
 };
 
-template<typename T>
-inline void CClientNetwork::SendPacketToServer(const T& packet, size_t bodySize)
+template<typename PacketT>
+inline void CClientNetwork::SendPacketToServer(const PacketT& packet, size_t bodySize)
 {
 	m_connection.PushPacket(packet, bodySize);
 }

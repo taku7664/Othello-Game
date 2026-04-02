@@ -133,16 +133,6 @@ void CGameManager::LeaveRoom(const char* errTitle, const char* errMessage)
 {
 	Debug::Log log("CGameManager::LeaveRoom()");
 
-	if (GameCore::GameServer.IsRunningServer())
-	{
-		if ( IPlayer* local = GameCore::GetLocalPlayer() )
-		{
-			Packet::C2S_LeaveRequest packet{ .Guid = local->GetGUID() };
-			GameCore::ClientServer->SendPacketToServer( packet );
-		}
-		GameCore::GameServer.EndServer();
-	}
-
 	if (errTitle)
 	{
 		GameCore::SetErrorMessage( errTitle , errMessage );
@@ -158,4 +148,13 @@ void CGameManager::LeaveRoom(const char* errTitle, const char* errMessage)
 	m_gameRoom.Clear();
 	GameCore::ActiveRoom = nullptr;
 
+	if ( GameCore::GameServer.IsRunningServer() )
+	{
+		if ( IPlayer* local = GameCore::GetLocalPlayer() )
+		{
+			Packet::C2S_LeaveRequest packet{ .Guid = local->GetGUID() };
+			GameCore::ClientServer->SendPacketToServer( packet );
+		}
+		GameCore::GameServer.EndServer();
+	}
 }
