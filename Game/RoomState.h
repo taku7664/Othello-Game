@@ -1,0 +1,9 @@
+#pragma once
+
+enum RoomState
+{
+	ROOM_STATE_NONE,
+	ROOM_STATE_WAITING,
+	ROOM_STATE_GAME_PLAYING,
+	ROOM_STATE_GAME_FINISH,
+};

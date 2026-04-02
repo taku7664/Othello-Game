@@ -1,0 +1,397 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="소스 파일">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="헤더 파일">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="리소스 파일">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{097a6c7c-2663-4c63-89a3-5d3700812972}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Manager">
+      <UniqueIdentifier>{6872f5ad-e9bb-442a-b7a8-b7904a9e005e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Server">
+      <UniqueIdentifier>{cf26d831-83ac-4a1f-9a5e-7a6bf3f1c609}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Game">
+      <UniqueIdentifier>{7f021c76-c535-424c-90db-c1bf43769557}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Render">
+      <UniqueIdentifier>{683ef857-01ae-4c86-b4c0-3bc9d348037f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Server\Connection">
+      <UniqueIdentifier>{a90c043d-dad2-4f68-8180-583af49182cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Server\Network">
+      <UniqueIdentifier>{22634f3d-de61-43b7-85c0-5e171490da8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Game\Player">
+      <UniqueIdentifier>{fc27cbb7-8ec1-4e62-b460-74f20e25cdfe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Game\Room">
+      <UniqueIdentifier>{bf8c49f3-bb31-4f09-b356-aa7dcaed8c8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Game\Board">
+      <UniqueIdentifier>{d359c3a3-1fd4-4478-a814-99b25e105899}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Server\Packet">
+      <UniqueIdentifier>{893dddec-4949-466c-8fe9-2e6832d2c10a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{ef969e44-cefe-47b1-8788-b8948d8cf45c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Window">
+      <UniqueIdentifier>{88e9276a-bff4-4a92-88e1-b1f77b4f701b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{3c2569a5-9d48-4b9c-9e6a-3865ddd340bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window">
+      <UniqueIdentifier>{b44bfcfc-699d-4fa5-83cf-c34a52cf3168}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\Widget">
+      <UniqueIdentifier>{2d8cf675-afb9-46b9-a836-e38c6fedddfb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Window\Context">
+      <UniqueIdentifier>{ad438ab7-fcae-4aa5-b268-900af2102cb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Window\View">
+      <UniqueIdentifier>{45f521bf-7dc7-42d0-9078-ba4fc38fadc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Game\Board\BoardCell">
+      <UniqueIdentifier>{acdf8194-3d8f-4dba-8338-ad9a2b7ca467}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="GameManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="Connection.h">
+      <Filter>Framework\Server\Connection</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientNetwork.h">
+      <Filter>Framework\Server\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="HostNetwork.h">
+      <Filter>Framework\Server\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="INetworkEventHandler.h">
+      <Filter>Framework\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="GameBoard.h">
+      <Filter>Framework\Game\Board</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCore.h">
+      <Filter>Framework\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameRoom.h">
+      <Filter>Framework\Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="IGameBoard.h">
+      <Filter>Framework\Game\Board</Filter>
+    </ClInclude>
+    <ClInclude Include="IGameObject.h">
+      <Filter>Framework\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="IPlayer.h">
+      <Filter>Framework\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="IUser.h">
+      <Filter>Framework\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Network.h">
+      <Filter>Framework\Server\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets.h">
+      <Filter>Framework\Server\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketUtillity.h">
+      <Filter>Framework\Server\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomState.h">
+      <Filter>Framework\Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Framework\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="IGameRoom.h">
+      <Filter>Framework\Game\Room</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerData.h">
+      <Filter>Framework\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorType.h">
+      <Filter>Framework\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ImWindow.h">
+      <Filter>Framework\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="IImWindow.h">
+      <Filter>Framework\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiUtillity.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImWindowFlag.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imconfig.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui_impl_dx11.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui_impl_win32.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imgui_internal.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imstb_rectpack.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imstb_textedit.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\imstb_truetype.h">
+      <Filter>ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="ImDockWindow.h">
+      <Filter>Framework\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="ImText.h">
+      <Filter>ImGui\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="ImButton.h">
+      <Filter>ImGui\Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="MasterWindow.h">
+      <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="ImWindowContext.h">
+      <Filter>Framework\Window\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="ImPopupWindow.h">
+      <Filter>Framework\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="GameView.h">
+      <Filter>Window\View</Filter>
+    </ClInclude>
+    <ClInclude Include="TitleView.h">
+      <Filter>Window\View</Filter>
+    </ClInclude>
+    <ClInclude Include="View.h">
+      <Filter>Window\View</Filter>
+    </ClInclude>
+    <ClInclude Include="ImCustomWindow.h">
+      <Filter>Framework\Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Utillity.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ChatManager.h">
+      <Filter>Framework\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="BoardCell.h">
+      <Filter>Framework\Game\Board\BoardCell</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorView.h">
+      <Filter>Window\View</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Game.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="GameManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="Connection.cpp">
+      <Filter>Framework\Server\Connection</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientNetwork.cpp">
+      <Filter>Framework\Server\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="HostNetwork.cpp">
+      <Filter>Framework\Server\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="INetworkEventHandler.cpp">
+      <Filter>Framework\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="GameBoard.cpp">
+      <Filter>Framework\Game\Board</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCore.cpp">
+      <Filter>Framework\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameRoom.cpp">
+      <Filter>Framework\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="IGameBoard.cpp">
+      <Filter>Framework\Game\Board</Filter>
+    </ClCompile>
+    <ClCompile Include="IGameObject.cpp">
+      <Filter>Framework\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="IGameRoom.cpp">
+      <Filter>Framework\Game\Room</Filter>
+    </ClCompile>
+    <ClCompile Include="IPlayer.cpp">
+      <Filter>Framework\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Network.cpp">
+      <Filter>Framework\Server\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Framework\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="IUser.cpp">
+      <Filter>Framework\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ImWindow.cpp">
+      <Filter>Framework\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="IImWindow.cpp">
+      <Filter>Framework\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiUtillity.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui_demo.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui_draw.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui_impl_dx11.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui_impl_win32.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui_tables.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\imgui_widgets.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="ImDockWindow.cpp">
+      <Filter>Framework\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="ImText.cpp">
+      <Filter>ImGui\Widget</Filter>
+    </ClCompile>
+    <ClCompile Include="ImButton.cpp">
+      <Filter>ImGui\Widget</Filter>
+    </ClCompile>
+    <ClCompile Include="MasterWindow.cpp">
+      <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="ImWindowContext.cpp">
+      <Filter>Framework\Window\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="ImPopupWindow.cpp">
+      <Filter>Framework\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="GameView.cpp">
+      <Filter>Window\View</Filter>
+    </ClCompile>
+    <ClCompile Include="TitleView.cpp">
+      <Filter>Window\View</Filter>
+    </ClCompile>
+    <ClCompile Include="View.cpp">
+      <Filter>Window\View</Filter>
+    </ClCompile>
+    <ClCompile Include="ChatManager.cpp">
+      <Filter>Framework\Manager</Filter>
+    </ClCompile>
+    <ClCompile Include="ImCustomWindow.cpp">
+      <Filter>Framework\Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Utillity.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="BoardCell.cpp">
+      <Filter>Framework\Game\Board\BoardCell</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorView.cpp">
+      <Filter>Window\View</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Game.rc">
+      <Filter>리소스 파일</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="small.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="Game.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
