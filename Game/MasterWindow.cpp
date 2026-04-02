@@ -93,6 +93,7 @@ void CMasterWindow::OnRenderStay()
 		if ( m_frameTransitionTick < 0.0f )
 		{
 			m_frameTransitionTick = 0.0f;
+			m_viewTable[ m_prevFrame ].View->OnHide();
 		}
 
 		const float ease = GetFrameTransitionEaseFactor();
@@ -147,7 +148,6 @@ void CMasterWindow::ChangeFrame( FrameType frame)
 	m_prevFrame = m_curFrame;
 	m_curFrame = frame;
 	m_frameTransitionTick = m_frameTransitionTime;
-	m_viewTable[m_prevFrame].View->OnHide();
 	m_viewTable[m_curFrame].View->OnVisible();
 }
 
