@@ -104,17 +104,11 @@ void TitleView::ShowMakeRoom( ImPopupContext& c )
 		profile.Nickname = nickname;
 		if ( GameCore::GameManager.MakeRoom( profile , roomname , port ) )
 		{
-			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_GAME );
 		}
 		else
 		{
-			std::string error = Utillity::WCharToString( Debug::Log::GetLastMessage() );
-			ImPopupContext popupContext;
-			popupContext.Title = "방 생성 실패";
-			popupContext.Flags = ImGuiWindowFlags_AlwaysAutoResize;
-			GameCore::ImGuiManager.OpenPopup( &popupContext , [ error ] ( ImPopupContext& c ) {
-				ShowMakeFail( c , error );
-				} );
+			GameCore::SetErrorMessage( "방 생성 실패" , Utillity::WCharToString( Debug::Log::GetLastMessage() ).c_str() );
+			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_ERROR );
 		}
 		c.IsOpen = false;
 	}
@@ -171,17 +165,11 @@ void TitleView::ShowJoinRoom( ImPopupContext& c )
 		profile.Nickname = nickname;
 		if ( GameCore::GameManager.JoinRoom( profile , hostIP , port ) )
 		{
-			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_GAME );
 		}
 		else
 		{
-			std::string error = Utillity::WCharToString(Debug::Log::GetLastMessage());
-			ImPopupContext popupContext;
-			popupContext.Title = "방 참가 실패";
-			popupContext.Flags = ImGuiWindowFlags_AlwaysAutoResize;
-			GameCore::ImGuiManager.OpenPopup( &popupContext , [ error ] ( ImPopupContext& c ) {
-				ShowJoinFail( c , error );
-				} );
+			GameCore::SetErrorMessage( "방 참가 실패" , Utillity::WCharToString( Debug::Log::GetLastMessage()).c_str() );
+			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_ERROR );
 		}
 		c.IsOpen = false;
 		

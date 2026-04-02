@@ -78,9 +78,10 @@ bool CGameManager::MakeRoom(const PlayerProfile& profile, const char* title, uns
         return false;
     }
 
-    GameCore::ActiveRoom = &m_gameRoom;
-    m_gameRoom.SetRoomTitle(title);
 	m_playerProfile = profile;
+    GameCore::ActiveRoom = &m_gameRoom;
+	m_gameRoom.SetRoomTitle( title, false );
+
     Packet::C2S_JoinRequest joinPacket;
 	joinPacket.Guid		= m_playerProfile.Guid;
     joinPacket.IsHost	= true;

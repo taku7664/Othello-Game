@@ -209,7 +209,12 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
     Debug::Log log("CHostNetwork::HandleJoinPlayer()");
     if (IGameRoom* gameRoom = GameCore::ActiveRoom)
     {
-        {
+		size_t currPlayerCount = gameRoom->GetCurrentPlayerCount();
+		size_t maxPlayerCount = gameRoom->GetRoomSetting().MaxPlayerCount;
+		if ( currPlayerCount < maxPlayerCount )
+		{
+			/// RoomPacket
+			{
             Packet::Com_RoomRefreshed packet;
 			packet.IsNew = true;
 			packet.RefreshFlags = ~0;
@@ -219,41 +224,57 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
                 gameRoom->GetRoomTitle().length() + 1,
                 gameRoom->GetRoomTitle().c_str()
             );
-            connection.PushPacket<Packet::Com_RoomRefreshed>(packet);
-        }
-        {
-            size_t currPlayerCount = gameRoom->GetCurrentPlayerCount();
-            for (size_t i = 0; i < currPlayerCount; ++i)
-            {
-                if (IPlayer* player = gameRoom->GetPlayerFromIndex(i))
-                {
-                    Packet::S2C_PlayerJoined packet;
-					packet.ConnectionID = player->GetConnectionID();
-                    packet.Guid = player->GetGUID();
-                    packet.IsHost = player->IsHost();
-                    packet.IsNew = false;
-                    strcpy_s(packet.Nickname,
-                        player->GetNickName().length() + 1,
-                        player->GetNickName().c_str()
-                    );
-                    connection.PushPacket<Packet::S2C_PlayerJoined>(packet);
-                }
-            }
-        }
-		{
-			Packet::S2C_PlayerJoined packet;
-			packet.ConnectionID = connection.ID;
-			packet.Guid = body->Guid;
-			packet.IsHost = body->IsHost;
-			packet.IsNew = true;
-			strcpy_s(packet.Nickname,
-				strlen(body->Nickname) + 1,
-				body->Nickname
-			);
-			for (Connection& c : m_connections)
-			{
-				c.PushPacket<Packet::S2C_PlayerJoined>(packet);
+            connection.PushPacket(packet);
 			}
+			/// NewPlayer Packet
+			{
+			    size_t currPlayerCount = gameRoom->GetCurrentPlayerCount();
+			    for (size_t i = 0; i < currPlayerCount; ++i)
+			    {
+			        if (IPlayer* player = gameRoom->GetPlayerFromIndex(i))
+			        {
+			            Packet::S2C_PlayerJoined packet;
+						packet.ConnectionID = player->GetConnectionID();
+			            packet.Guid = player->GetGUID();
+			            packet.IsHost = player->IsHost();
+			            packet.IsNew = false;
+			            strcpy_s(packet.Nickname,
+			                player->GetNickName().length() + 1,
+			                player->GetNickName().c_str()
+			            );
+			            connection.PushPacket(packet);
+			        }
+			    }
+			}
+			/// OldPlayer Packet
+			{
+				Packet::S2C_PlayerJoined packet;
+				packet.ConnectionID = connection.ID;
+				packet.Guid = body->Guid;
+				packet.IsHost = body->IsHost;
+				packet.IsNew = true;
+				strcpy_s(packet.Nickname,
+					strlen(body->Nickname) + 1,
+					body->Nickname
+				);
+				BroadCast(packet);
+			}
+		}
+		else
+		{
+			/// Already Full
+			std::string errTitle = "접속에 실패하셨습니다.";
+			std::string errDesc  = "방의 인원이 이미 가득 찼습니다.";
+			size_t		descLen  = errDesc.size();
+			size_t		descSize = descLen + 1;
+			size_t		bodySize = sizeof(Packet::Com_Error) + descSize;
+
+			std::vector<char> buffer(bodySize);
+			Packet::Com_Error* packet = reinterpret_cast<Packet::Com_Error*>(buffer.data());
+			strcpy_s(packet->errTitle, errTitle.length() + 1, errTitle.c_str());
+			memcpy(buffer.data() + sizeof(Packet::Com_Error), errDesc.data(), descSize);
+
+			connection.PushPacket(packet);
 		}
     }
 }
