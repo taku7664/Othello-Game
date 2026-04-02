@@ -14,6 +14,8 @@ public:
 
 	template<typename T>
 	void BroadCast(const T& packet , size_t bodySize = 0);
+	template<typename T>
+	void SendToConnection( int id , const T& packet , size_t bodySize = 0 );
 
 private:
     void Close();
@@ -41,5 +43,17 @@ inline void CHostNetwork::BroadCast( const T& packet , size_t bodySize )
 	for(Connection& connection : m_connections)
 	{
 		connection.PushPacket(packet, bodySize);
+	}
+}
+
+template<typename T>
+inline void CHostNetwork::SendToConnection( int id , const T& packet , size_t bodySize )
+{
+	for ( Connection& connection : m_connections )
+	{
+		if ( connection.ID == id )
+		{
+			connection.PushPacket( packet , bodySize );
+		}
 	}
 }
