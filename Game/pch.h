@@ -16,6 +16,7 @@
 #include "Utillity.h"
 #include "ColorType.h"
 #include "RoomState.h"
+#include "RoomSetting.h"
 #include "PlayerData.h"
 
 #include "ImGuiUtillity.h"
