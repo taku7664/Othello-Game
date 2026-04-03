@@ -87,7 +87,7 @@ void CMasterWindow::OnRenderStay()
 
 	if ( m_frameTransitionTick > 0.0f )
 	{
-		m_frameTransitionTick -= ImGui::GetIO().DeltaTime;
+		m_frameTransitionTick -= ImMin(ImGui::GetIO().DeltaTime, 0.1f);
 		if ( m_frameTransitionTick < 0.0f )
 		{
 			m_frameTransitionTick = 0.0f;
