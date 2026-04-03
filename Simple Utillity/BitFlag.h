@@ -7,11 +7,12 @@ public:
     BitFlag(unsigned int flags) : mBits(flags) {}
 
 public:
-    inline bool Empty() { return mBits == 0; }
+    inline bool Empty() const { return mBits == 0; }
+    inline void Clear() { mBits = 0; }
     inline void Set(unsigned int flags) { mBits = flags; }
     inline void Add(unsigned int flags) { mBits |= flags; }
     inline void Remove(unsigned int flags) { mBits &= ~flags; }
-    inline void Clear() { mBits = 0; }
+    inline void Toggle(unsigned int flags) { mBits ^= flags; }
 
     inline unsigned int Get() const { return mBits; }
     inline bool Has(unsigned int flags) const { return (mBits & flags) == flags; }
