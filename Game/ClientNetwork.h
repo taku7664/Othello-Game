@@ -11,6 +11,7 @@ public:
 	bool Initialize() override;
 	void Finalize() override;
 	void Update() override;
+	bool HeartBeat() override;
 
 	template<typename PacketT>
 	void SendPacketToServer(const PacketT& packet, size_t bodySize = 0);
@@ -24,8 +25,7 @@ private:
 
 private:
 	void Handle_S2C_PlayerJoined(PacketHeader header, const Packet::S2C_PlayerJoined* body);
-	void Handle_S2C_PlayerLeaved(PacketHeader header, const Packet::S2C_PlayerLeaved* body);
-	void Handle_S2C_PlayerKicked(PacketHeader header, const Packet::S2C_PlayerKicked* body);
+	void Handle_S2C_PlayerDisConnected(PacketHeader header, const Packet::S2C_PlayerDisConnected* body);
 	void Handle_S2C_PlaceStone(PacketHeader header, const Packet::S2C_PlaceStone* body);
 	void Handle_Com_Error(PacketHeader header, const Packet::Com_Error* body);
 	void Handle_Com_ChatMessage(PacketHeader header, const Packet::Com_ChatMessage* body);
@@ -36,6 +36,9 @@ private:
 private:
 	Connection	m_connection;
 	std::string	m_hostIP;
+	float m_timeoutTime;
+	float m_heartBeatTick;
+	float m_heartBeatTimer;
 
 };
 

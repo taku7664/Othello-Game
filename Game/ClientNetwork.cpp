@@ -4,6 +4,9 @@
 CClientNetwork::CClientNetwork(const char* hostIP, unsigned short port)
 	: CNetwork(port)
 	, m_hostIP(hostIP)
+	, m_heartBeatTick(3.0f)
+	, m_heartBeatTimer(0.0f)
+	, m_timeoutTime(5.0f)
 {
 }
 
@@ -145,7 +148,26 @@ void CClientNetwork::Update()
 
 	if (FD_ISSET(m_connection.Socket, &readfds))
 	{
+		m_connection.IdleTime = 0.0f;
 		ReceiveFromHost();
+	}
+}
+
+bool CClientNetwork::HeartBeat()
+{
+	const float deltaTime = GameCore::Time.GetUnScaledDeltaTime();
+	m_heartBeatTimer += deltaTime;
+	if ( m_heartBeatTimer > m_heartBeatTick )
+	{
+		m_heartBeatTimer = 0.0f;
+		SendPacketToServer<Packet::Com_HeartBeat>( {} );
+	}
+
+	m_connection.IdleTime += deltaTime;
+	if ( m_connection.IdleTime > m_timeoutTime )
+	{
+		GameCore::GameManager.LeaveRoom("방에서 퇴장하셨습니다.", "Lost Connection Timeout.");
+		return false;
 	}
 }
 
@@ -165,8 +187,7 @@ void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 	Debug::Log log("CClientNetwork::Handle_Packet()");
 	std::string typeName(header.TypeName);
 	PACKET_IF(S2C_PlayerJoined)
-	PACKET_IF(S2C_PlayerLeaved)
-	PACKET_IF(S2C_PlayerKicked)
+	PACKET_IF(S2C_PlayerDisConnected)
 	PACKET_IF(S2C_PlaceStone)
 	PACKET_IF(Com_Error)
 	PACKET_IF(Com_ChatMessage)
@@ -224,31 +245,21 @@ void CClientNetwork::Handle_S2C_PlayerJoined(PacketHeader header, const Packet::
 	}
 }
 
-void CClientNetwork::Handle_S2C_PlayerLeaved(PacketHeader header, const Packet::S2C_PlayerLeaved* body)
+void CClientNetwork::Handle_S2C_PlayerDisConnected(PacketHeader header, const Packet::S2C_PlayerDisConnected* body)
 {
-	Debug::Log log("CClientNetwork::Handle_S2C_PlayerLeaved()");
-	if (IPlayer* player = GameCore::GetPlayerFromGuid(body->Guid))
-	{
-		std::string msg = std::format( "{}님이 퇴장하셨습니다." ,
-			player->GetNickName() );
-		GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
-		GameCore::ActiveRoom->RemovePlayer(body->Guid);
-	}
-}
+	Debug::Log log("CClientNetwork::Handle_S2C_PlayerDisConnected()");
 
-void CClientNetwork::Handle_S2C_PlayerKicked( PacketHeader header , const Packet::S2C_PlayerKicked* body )
-{
-	Debug::Log log( "CClientNetwork::Handle_S2C_PlayerKicked()" );
+	std::string mainCause = body->MainCause;
 	if ( IPlayer* local = GameCore::GetLocalPlayer() )
 	{
 		if ( local->GetGUID() == body->Guid )
 		{
-			GameCore::GameManager.LeaveRoom( "방에서 퇴장하셨습니다." , "강퇴" );
+			mainCause += body->SubCause[ 0 ] != '0' ? std::format( " [{}]" , body->SubCause ) : "";
+			GameCore::GameManager.LeaveRoom( "방에서 퇴장하셨습니다." , mainCause.c_str() );
 		}
-		else if( IPlayer* dest = GameCore::GetPlayerFromGuid( body->Guid ) )
+		else if ( IPlayer* dest = GameCore::GetPlayerFromGuid( body->Guid ) )
 		{
-			std::string msg = std::format( "{}님이 강퇴당하셨습니다." ,
-				dest->GetNickName() );
+			std::string msg = std::format( "{}님의 접속이 끊겼습니다. [원인: {}]" , dest->GetNickName() , mainCause );
 			GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
 			GameCore::ActiveRoom->RemovePlayer( body->Guid );
 		}

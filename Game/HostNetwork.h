@@ -11,6 +11,7 @@ public:
     bool Initialize() override;
     void Finalize() override;
     void Update() override;
+	bool HeartBeat() override;
 
 	template<typename PacketT>
 	void BroadCast(const PacketT& packet , size_t bodySize = 0);
@@ -22,6 +23,7 @@ private:
     void AcceptClients();
     void ReceiveFromClients(fd_set& readfds);
     void SendToClients(fd_set& writefds);
+	void HandleConnectionDisconnect(Connection& connection);
 
 private:
     void HandlePacket(Connection& connection, PacketHeader header, const char* body);
@@ -35,6 +37,9 @@ private:
     SOCKET			        m_socket;
     SOCKADDR_IN		        m_address;
     std::vector<Connection> m_connections;
+	float					m_connectiontimeoutTime;
+	float					m_heartBeatTick;
+	float					m_heartBeatTimer;
 };
 
 template<typename PacketT>

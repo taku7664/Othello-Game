@@ -24,6 +24,7 @@ public:
 	std::vector<Buffer>		SendQueue;
 	std::vector<Buffer>		RecvQueue;
 	Buffer					RecvBuffer;
+	float					IdleTime = 0.0f;
 };
 
 template<typename PacketT>

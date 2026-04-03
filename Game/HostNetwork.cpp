@@ -5,6 +5,10 @@ CHostNetwork::CHostNetwork(unsigned short port)
 	: CNetwork(port)
 	, m_socket(INVALID_SOCKET)
 	, m_address({})
+	, m_connectiontimeoutTime(10.0f)
+	, m_heartBeatTick(3.0f)
+	, m_heartBeatTimer(0.0f)
+
 {
 }
 
@@ -98,10 +102,35 @@ void CHostNetwork::Update()
         ReceiveFromClients(readfds);
         SendToClients(writefds);
     }
+
     auto remiveIt = std::remove_if(m_connections.begin(), m_connections.end(), [](const Connection& c) {
         return c.Socket == INVALID_SOCKET;
         });
     m_connections.erase(remiveIt, m_connections.end());
+}
+
+bool CHostNetwork::HeartBeat()
+{
+	const float deltaTime = GameCore::Time.GetUnScaledDeltaTime();
+	m_heartBeatTimer += deltaTime;
+	if ( m_heartBeatTimer > m_heartBeatTick )
+	{
+		m_heartBeatTimer = 0.0f;
+		BroadCast<Packet::Com_HeartBeat>( {} );
+	}
+
+	for ( Connection& connection : m_connections )
+	{
+		if ( connection.IdleTime > m_connectiontimeoutTime )
+		{
+			HandleConnectionDisconnect( connection );
+		}
+		else
+		{
+			connection.IdleTime += deltaTime;
+		}
+	}
+	return true;
 }
 
 void CHostNetwork::Close()
@@ -161,15 +190,18 @@ void CHostNetwork::ReceiveFromClients(fd_set& readfds)
         {
             continue;
         }
-
         connection.RecievePackets();
-        for (Buffer& buf : connection.RecvQueue)
-        {
-            PacketHeader header = GetHeaderFromPacketBuffer(buf.data());
-            const char* body = GetBodyFromPacketBuffer(buf.data());
-            HandlePacket(connection, header, body);
-        }
-        connection.RecvQueue.clear();
+		if ( false == connection.RecvQueue.empty() )
+		{
+			connection.IdleTime = 0.0f;
+			for ( Buffer& buf : connection.RecvQueue )
+			{
+				PacketHeader header = GetHeaderFromPacketBuffer( buf.data() );
+				const char* body = GetBodyFromPacketBuffer( buf.data() );
+				HandlePacket( connection , header , body );
+			}
+			connection.RecvQueue.clear();
+		}
     }
 }
 
@@ -184,6 +216,19 @@ void CHostNetwork::SendToClients(fd_set& writefds)
         }
         connection.SendPackets();
     }
+}
+
+void CHostNetwork::HandleConnectionDisconnect( Connection& connection )
+{
+	if ( IPlayer* player = GameCore::GetPlayerFromConnectionID( connection.ID ) )
+	{
+		const std::string mainCause = "Lost Connection Timeout";
+		Packet::S2C_PlayerDisConnected packet;
+		packet.Guid = player->GetGUID();
+		strcpy_s( packet.MainCause , mainCause.length() + 1 , mainCause.c_str() );
+		BroadCast( packet );
+	}
+	connection.Socket = INVALID_SOCKET;
 }
 
 #define PACKET_IF(type) \
@@ -283,11 +328,11 @@ void CHostNetwork::Handle_C2S_LeaveRequest( Connection& connection , PacketHeade
 {
 	Debug::Log log( "CHostNetwork::Handle_C2S_LeaveRequest()" );
 	{
-		Packet::S2C_PlayerLeaved packet;
+		Packet::S2C_PlayerDisConnected packet;
 		packet.Guid = body->Guid;
 		for (Connection& c : m_connections)
 		{
-			c.PushPacket<Packet::S2C_PlayerLeaved>(packet);
+			c.PushPacket<Packet::S2C_PlayerDisConnected>(packet);
 		}
 	}
 }
@@ -303,6 +348,7 @@ void CHostNetwork::Handle_C2S_PlaceStone( Connection& connection , PacketHeader 
 		c.PushPacket<Packet::S2C_PlaceStone>(packet);
 	}
 }
+
 void CHostNetwork::Handle_Com_ChatMessage(Connection& connection, PacketHeader header, const Packet::Com_ChatMessage* body)
 {
     Debug::Log log("CHostNetwork::Handle_ChatMessage()");

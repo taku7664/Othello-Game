@@ -397,11 +397,11 @@ void GameView::DrawPlayerPopup(IPlayer* player)
 	{
 		if ( ImGui::MenuItem( "강퇴" ) )
 		{
-			{
-				Packet::S2C_PlayerKicked packet;
-				packet.Guid = player->GetGUID();
-				GameCore::HostServer->BroadCast( packet );
-			}
+			std::string cause = "강퇴";
+			Packet::S2C_PlayerDisConnected packet;
+			packet.Guid = player->GetGUID();
+			strcpy_s(packet.MainCause, cause.length() + 1, cause.c_str());
+			GameCore::HostServer->BroadCast( packet );
 			ImGui::CloseCurrentPopup();
 		}
 	}

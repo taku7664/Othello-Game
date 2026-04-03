@@ -32,13 +32,11 @@ namespace Packet
 		bool IsHost = false;
 		bool IsNew = true;
 	};
-	struct S2C_PlayerLeaved
+	struct S2C_PlayerDisConnected
 	{
 		GUID Guid = {};
-	};
-	struct S2C_PlayerKicked
-	{
-		GUID Guid = {};
+		char MainCause[64] = { '0', };
+		char SubCause[64] = { '0', };
 	};
 	struct S2C_PlaceStone
 	{
@@ -51,6 +49,9 @@ namespace Packet
 	////////////////////////
 	/// Common
 	////////////////////////
+	struct Com_HeartBeat
+	{
+	};
 	struct Com_Error
 	{
 		char ErrTitle[64] = { '0', };

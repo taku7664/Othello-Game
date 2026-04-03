@@ -32,6 +32,10 @@ struct GameCore
 	{
 		return ActiveRoom ? ActiveRoom->GetPlayerFromGuid(guid) : nullptr;
 	}
+	inline static IPlayer* GetPlayerFromConnectionID( int id )
+	{
+		return ActiveRoom ? ActiveRoom->GetPlayerFromId( id ) : nullptr;
+	}
 
 	inline static void SetErrorMessage(const char* title, const char* message)
 	{

@@ -31,11 +31,17 @@ void ServerManager::Update()
 {
 	if (m_hostNetwork)
 	{
-		m_hostNetwork->Update();
+		if (m_hostNetwork->HeartBeat())
+		{
+			m_hostNetwork->Update();
+		}
 	}
 	if (m_clientNetwork)
 	{
-		m_clientNetwork->Update();
+		if (m_clientNetwork->HeartBeat())
+		{
+			m_clientNetwork->Update();
+		}
 	}
 }
 

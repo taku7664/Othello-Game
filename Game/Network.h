@@ -11,6 +11,7 @@ public:
 	virtual bool Initialize() = 0;
 	virtual void Finalize() = 0;
 	virtual void Update() = 0;
+	virtual bool HeartBeat() = 0;
 
 	unsigned short GetPort() const;
 
