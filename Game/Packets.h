@@ -6,7 +6,7 @@ namespace Packet
 	struct C2S_JoinRequest
 	{
 		GUID Guid			= {};
-		char Nickname[64]	= { '0', };
+		char Nickname[64]	= { '\0', };
 		bool IsHost			= false;
 	};
 	struct C2S_LeaveRequest
@@ -28,15 +28,15 @@ namespace Packet
 	{
 		int  ConnectionID = 0;
 		GUID Guid = {};
-		char Nickname[64] = { '0', };
+		char Nickname[64] = { '\0', };
 		bool IsHost = false;
 		bool IsNew = true;
 	};
 	struct S2C_PlayerDisConnected
 	{
 		GUID Guid = {};
-		char MainCause[64] = { '0', };
-		char SubCause[64] = { '0', };
+		char MainCause[64] = { '\0', };
+		char SubCause[64] = { '\0', };
 	};
 	struct S2C_PlaceStone
 	{
@@ -54,7 +54,7 @@ namespace Packet
 	};
 	struct Com_Error
 	{
-		char ErrTitle[64] = { '0', };
+		char ErrTitle[64] = { '\0', };
 	};
 	struct Com_ChatMessage
 	{
@@ -64,14 +64,14 @@ namespace Packet
 	{
 		GUID DestGuid = GUID_NULL;
 		BitFlag RefreshFlags = 0;
-		char Nickname[64] = { '0', };
+		char Nickname[64] = { '\0', };
 		ColorType Color = ColorType::None;
 	};
 	struct Com_RoomRefreshed
 	{
 		bool        IsNew = false;
 		BitFlag		RefreshFlags = 0;
-		char		Title[64] = { '0', };
+		char		Title[64] = { '\0', };
 		RoomSetting	Setting = {};
 		RoomState	State = RoomState::ROOM_STATE_NONE;
 	};

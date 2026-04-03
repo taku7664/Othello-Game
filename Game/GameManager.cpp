@@ -126,8 +126,8 @@ void CGameManager::LeaveRoom(const char* errTitle, const char* errMessage)
 		return;
 	}
 
-	m_gameRoom.Clear();
 	GameCore::ActiveRoom = nullptr;
+	m_gameRoom.Clear();
 	GameCore::ChatManager.Clear();
 
 	if (errTitle)
@@ -157,9 +157,9 @@ void CGameManager::LeaveRoom(const char* errTitle, const char* errMessage)
 
 			GameCore::HostServer->BroadCast( *packet , bodySize );
 		}
-		else if ( IPlayer* local = GameCore::GetLocalPlayer() )
+		else
 		{
-			Packet::C2S_LeaveRequest packet{ .Guid = local->GetGUID() };
+			Packet::C2S_LeaveRequest packet{ .Guid = m_playerProfile.Guid };
 			GameCore::ClientServer->SendPacketToServer( packet );
 		}
 		GameCore::GameServer.EndServer();

@@ -254,7 +254,7 @@ void CClientNetwork::Handle_S2C_PlayerDisConnected(PacketHeader header, const Pa
 	{
 		if ( local->GetGUID() == body->Guid )
 		{
-			mainCause += body->SubCause[ 0 ] != '0' ? std::format( " [{}]" , body->SubCause ) : "";
+			mainCause += body->SubCause[ 0 ] != '\0' ? std::format( " [{}]" , body->SubCause ) : "";
 			GameCore::GameManager.LeaveRoom( "방에서 퇴장하셨습니다." , mainCause.c_str() );
 		}
 		else if ( IPlayer* dest = GameCore::GetPlayerFromGuid( body->Guid ) )
