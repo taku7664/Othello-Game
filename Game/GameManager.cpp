@@ -120,6 +120,16 @@ void CGameManager::LeaveRoom(const char* errTitle, const char* errMessage)
 {
 	Debug::Log log("CGameManager::LeaveRoom()");
 
+	if ( nullptr == GameCore::ActiveRoom )
+	{
+		log.WriteLine( Debug::LOG_WARNING , "[WARN] ActiveRoom is Null Reference." );
+		return;
+	}
+
+	m_gameRoom.Clear();
+	GameCore::ActiveRoom = nullptr;
+	GameCore::ChatManager.Clear();
+
 	if (errTitle)
 	{
 		GameCore::SetErrorMessage( errTitle , errMessage );
@@ -130,14 +140,24 @@ void CGameManager::LeaveRoom(const char* errTitle, const char* errMessage)
 		GameCore::MasterWindow->ChangeFrame(CMasterWindow::FRAME_TITLE);
 	}
 
-	GameCore::ChatManager.Clear();
-
-	m_gameRoom.Clear();
-	GameCore::ActiveRoom = nullptr;
-
 	if ( GameCore::GameServer.IsRunningServer() )
 	{
-		if ( IPlayer* local = GameCore::GetLocalPlayer() )
+		if ( GameCore::HostServer )
+		{
+			std::string errTitle = "방에서 퇴장했습니다.";
+			std::string errDesc  = "호스트가 방에서 퇴장했습니다.";
+			size_t		descLen = errDesc.size();
+			size_t		descSize = descLen + 1;
+			size_t		bodySize = sizeof( Packet::Com_Error ) + descSize;
+
+			std::vector<char> buffer( bodySize );
+			Packet::Com_Error* packet = reinterpret_cast< Packet::Com_Error* >( buffer.data() );
+			strcpy_s( packet->ErrTitle , errTitle.length() + 1 , errTitle.c_str() );
+			memcpy( buffer.data() + sizeof( Packet::Com_Error ) , errDesc.data() , descSize );
+
+			GameCore::HostServer->BroadCast( *packet , bodySize );
+		}
+		else if ( IPlayer* local = GameCore::GetLocalPlayer() )
 		{
 			Packet::C2S_LeaveRequest packet{ .Guid = local->GetGUID() };
 			GameCore::ClientServer->SendPacketToServer( packet );
