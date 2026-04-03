@@ -137,12 +137,9 @@ void GameView::DrawRoomSetting(bool isHost)
 {
 	const ImVec2 availSize = ImGui::GetContentRegionAvail();
 	const float  labelX = availSize.x * 0.3f;
-	const RoomSetting& setting = GameCore::ActiveRoom->GetRoomSetting();
-
-	static std::string	roomTitle		= GameCore::ActiveRoom->GetRoomTitle();
-	static int			maxPlayerCount	= ( int ) setting.MaxPlayerCount;
-	static int			row				= ( int ) setting.Row;
-	static int			col				= ( int ) setting.Col;
+	const RoomSetting&	currSetting = GameCore::ActiveRoom->GetRoomSetting();
+	static RoomSetting	newSetting	= currSetting;
+	static std::string	roomTitle	= GameCore::ActiveRoom->GetRoomTitle();
 
 	ImGui::Utillity::DisableScope disableScope( !isHost );
 	ImText()( "방 설정" , 2.0f );
@@ -184,47 +181,46 @@ void GameView::DrawRoomSetting(bool isHost)
 	}
 	ImGui::PopID();
 	ImGui::Separator();
-	ImGui::PushID( "setting" );
+	ImGui::PushID( "currSetting" );
 	{
-		static bool isDirty = false;
 		ImGui::Utillity::TextWithVerticalSeparator( "최대 인원 수" , labelX );
-		if ( ImGui::InputInt( "##max_player" , &maxPlayerCount ) )
+		if ( ImGui::InputInt( "##max_player" , &newSetting.MaxPlayerCount ) )
 		{
-			maxPlayerCount = ImClamp( maxPlayerCount , 2 , 4 );
-			isDirty = true;
+			newSetting.MaxPlayerCount = ImClamp( newSetting.MaxPlayerCount , 2 , 4 );
 		}
 		ImGui::Utillity::HoveredToolTip( "2 ~ 4 사이 값을 입력해주세요." );
 
-		ImGui::Utillity::TextWithVerticalSeparator( "보드 열 크기 (X)" , labelX );
-		if ( ImGui::InputInt( "##board_row" , &row , 2 ) )
+		ImGui::Utillity::TextWithVerticalSeparator( "최대 사이클 수" , labelX );
+		if ( ImGui::InputInt( "##max_cycle" , &newSetting.MaxCycle ) )
 		{
-			row = row & ~1; // 하위비트를 버림으로써 짝수로 변경
-			row = ImClamp( row , 4 , 16 );
-			isDirty = true;
+			newSetting.MaxCycle = ImClamp( newSetting.MaxCycle , 0 , 999 );
+		}
+		ImGui::Utillity::HoveredToolTip( "0 ~ 999 사이 값을 입력해주세요.\n0이면 보드가 전부 찰 때까지 둡니다." );
+
+		ImGui::Utillity::TextWithVerticalSeparator( "보드 열 크기 (X)" , labelX );
+		if ( ImGui::InputInt( "##board_row" , &newSetting.Row , 2 ) )
+		{
+			newSetting.Row = newSetting.Row & ~1; // 하위비트를 버림으로써 짝수로 변경
+			newSetting.Row = ImClamp( newSetting.Row , 4 , 16 );
 		}
 		ImGui::Utillity::HoveredToolTip( "4 ~ 16 사이 값을 입력해주세요.\n2의 배수를 입력해주세요." );
 
 		ImGui::Utillity::TextWithVerticalSeparator( "보드 행 크기 (Y)" , labelX );
-		if ( ImGui::InputInt( "##board_col" , &col , 2 ) )
+		if ( ImGui::InputInt( "##board_col" , &newSetting.Col , 2 ) )
 		{
-			row = row & ~1;
-			row = ImClamp( row , 4 , 16 );
-			isDirty = true;
+			newSetting.Col = newSetting.Col & ~1;
+			newSetting.Col = ImClamp( newSetting.Col , 4 , 16 );
 		}
 		ImGui::Utillity::HoveredToolTip( "4 ~ 16 사이 값을 입력해주세요.\n2의 배수를 입력해주세요." );
 
+		bool isDirty = newSetting != currSetting;
 		{
 			ImGui::Utillity::DisableScope disableScope( !isDirty );
 			if (ImGui::Button( "변경" ) )
 			{
 				if ( isDirty )
 				{
-					RoomSetting setting{
-						.MaxPlayerCount = ( size_t ) maxPlayerCount,
-						.Row = ( size_t ) row, .Col = ( size_t ) col
-					};
-					GameCore::ActiveRoom->SetRoomSetting( setting );
-					isDirty = false;
+					GameCore::ActiveRoom->SetRoomSetting( newSetting );
 				}
 			}
 		}
@@ -233,21 +229,13 @@ void GameView::DrawRoomSetting(bool isHost)
 			ImGui::Utillity::DisableScope disableScope( !isDirty );
 			if ( ImGui::Button( "취소" ) )
 			{
-				maxPlayerCount = ( int ) setting.MaxPlayerCount;
-				row = ( int ) setting.Row;
-				col = ( int ) setting.Col;
-				isDirty = false;
+				newSetting = currSetting;
 			}
 		}
 		ImGui::SameLine();
 		if ( ImGui::Button( "기본 값" ) )
 		{
-			RoomSetting origin{ };
-			maxPlayerCount = ( int ) origin.MaxPlayerCount;
-			row = ( int ) origin.Row;
-			col = ( int ) origin.Col;
-			GameCore::ActiveRoom->SetRoomSetting( origin );
-			isDirty = false;
+			newSetting = { };
 		}
 	}
 	ImGui::PopID();
@@ -260,10 +248,8 @@ void GameView::DrawRoomSetting(bool isHost)
 
 	if ( false == isHost )
 	{
-		roomTitle		= GameCore::ActiveRoom->GetRoomTitle();
-		maxPlayerCount	= ( int ) setting.MaxPlayerCount;
-		row				= ( int ) setting.Row;
-		col				= ( int ) setting.Col;
+		roomTitle	= GameCore::ActiveRoom->GetRoomTitle();
+		newSetting	= currSetting;
 	}
 }
 
