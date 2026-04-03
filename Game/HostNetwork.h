@@ -20,6 +20,7 @@ public:
 
 private:
     void Close();
+	void RefreshInvalidConnections();
     void AcceptClients();
     void ReceiveFromClients(fd_set& readfds);
     void SendToClients(fd_set& writefds);
@@ -37,9 +38,6 @@ private:
     SOCKET			        m_socket;
     SOCKADDR_IN		        m_address;
     std::vector<Connection> m_connections;
-	float					m_connectiontimeoutTime;
-	float					m_heartBeatTick;
-	float					m_heartBeatTimer;
 };
 
 template<typename PacketT>

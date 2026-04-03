@@ -36,10 +36,6 @@ private:
 private:
 	Connection	m_connection;
 	std::string	m_hostIP;
-	float m_timeoutTime;
-	float m_heartBeatTick;
-	float m_heartBeatTimer;
-
 };
 
 template<typename PacketT>

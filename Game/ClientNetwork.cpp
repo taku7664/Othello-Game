@@ -4,9 +4,6 @@
 CClientNetwork::CClientNetwork(const char* hostIP, unsigned short port)
 	: CNetwork(port)
 	, m_hostIP(hostIP)
-	, m_heartBeatTick(3.0f)
-	, m_heartBeatTimer(0.0f)
-	, m_timeoutTime(5.0f)
 {
 }
 
@@ -159,6 +156,7 @@ bool CClientNetwork::HeartBeat()
 	m_heartBeatTimer += deltaTime;
 	if ( m_heartBeatTimer > m_heartBeatTick )
 	{
+		Debug::Log::WriteLine( Debug::LOG_INFO, "Client HeartBeat." );
 		m_heartBeatTimer = 0.0f;
 		SendPacketToServer<Packet::Com_HeartBeat>( {} );
 	}
@@ -169,6 +167,8 @@ bool CClientNetwork::HeartBeat()
 		GameCore::GameManager.LeaveRoom("방에서 퇴장하셨습니다.", "Lost Connection Timeout.");
 		return false;
 	}
+
+	return true;
 }
 
 int CClientNetwork::GetConnectionID() const
@@ -184,7 +184,6 @@ if(typeName == typeid(Packet::type).name() + 15) {	\
 
 void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 {
-	Debug::Log log("CClientNetwork::Handle_Packet()");
 	std::string typeName(header.TypeName);
 	PACKET_IF(S2C_PlayerJoined)
 	PACKET_IF(S2C_PlayerDisConnected)

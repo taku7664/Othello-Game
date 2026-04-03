@@ -17,4 +17,7 @@ public:
 
 protected:
 	unsigned short	m_port;
+	float			m_heartBeatTick;
+	float			m_heartBeatTimer;
+	float			m_timeoutTime;
 };

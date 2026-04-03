@@ -48,7 +48,7 @@ void Connection::SendPackets()
 		return;
 	}
 
-	Debug::Log log("Connection::Send()");
+	Debug::Log log("Connection::SendPackets()");
 	for (int i = 0; i < SendQueue.size();)
 	{
 		Buffer& buffer		= SendQueue[i];
@@ -79,8 +79,9 @@ void Connection::SendPackets()
 // TODO: 후에 StreamQueue로 변경
 void Connection::RecievePackets()
 {
-    char temp[4096];
+	Debug::Log log("Connection::RecievePackets()");
 
+	char temp[4096];
     while (true)
     {
         int recvBytes = recv(Socket, temp, sizeof(temp), 0);
@@ -101,16 +102,20 @@ void Connection::RecievePackets()
                 PacketHeader header;
                 std::memcpy(&header, RecvBuffer.data(), sizeof(PacketHeader));
 
+				const size_t packetSize = sizeof(PacketHeader) + header.BodySize;
+
                 // 패킷 전체가 아직 안 왔으면 다음 recv까지 대기
-                if (RecvBuffer.size() < sizeof(PacketHeader) + header.BodySize)
+                if (RecvBuffer.size() < packetSize )
                     break;
 
                 // 패킷 하나를 RecvQueue에 옮김
-                Buffer packet(RecvBuffer.begin(), RecvBuffer.begin() + sizeof(PacketHeader) + header.BodySize);
+                Buffer packet(RecvBuffer.begin(), RecvBuffer.begin() + packetSize );
                 RecvQueue.push_back(std::move(packet));
 
                 // 앞에서 꺼낸 패킷만큼 제거
-                RecvBuffer.erase(RecvBuffer.begin(), RecvBuffer.begin() + sizeof(PacketHeader) + header.BodySize);
+                RecvBuffer.erase(RecvBuffer.begin(), RecvBuffer.begin() + packetSize );
+
+				log.WriteLine(Debug::LOG_INFO , packetSize, "bytes recieve succeed.");
             }
         }
         else if (recvBytes == 0)

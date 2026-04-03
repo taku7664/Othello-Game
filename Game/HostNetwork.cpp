@@ -5,10 +5,6 @@ CHostNetwork::CHostNetwork(unsigned short port)
 	: CNetwork(port)
 	, m_socket(INVALID_SOCKET)
 	, m_address({})
-	, m_connectiontimeoutTime(10.0f)
-	, m_heartBeatTick(3.0f)
-	, m_heartBeatTimer(0.0f)
-
 {
 }
 
@@ -102,11 +98,6 @@ void CHostNetwork::Update()
         ReceiveFromClients(readfds);
         SendToClients(writefds);
     }
-
-    auto remiveIt = std::remove_if(m_connections.begin(), m_connections.end(), [](const Connection& c) {
-        return c.Socket == INVALID_SOCKET;
-        });
-    m_connections.erase(remiveIt, m_connections.end());
 }
 
 bool CHostNetwork::HeartBeat()
@@ -115,20 +106,27 @@ bool CHostNetwork::HeartBeat()
 	m_heartBeatTimer += deltaTime;
 	if ( m_heartBeatTimer > m_heartBeatTick )
 	{
+		Debug::Log::WriteLine( Debug::LOG_INFO , "Host HeartBeat." );
 		m_heartBeatTimer = 0.0f;
 		BroadCast<Packet::Com_HeartBeat>( {} );
 	}
 
+	bool isDisconnected = false;
 	for ( Connection& connection : m_connections )
 	{
-		if ( connection.IdleTime > m_connectiontimeoutTime )
+		if ( connection.IdleTime > m_timeoutTime )
 		{
 			HandleConnectionDisconnect( connection );
+			isDisconnected = true;
 		}
 		else
 		{
 			connection.IdleTime += deltaTime;
 		}
+	}
+	if ( isDisconnected )
+	{
+		RefreshInvalidConnections();
 	}
 	return true;
 }
@@ -143,6 +141,14 @@ void CHostNetwork::Close()
         c.ResetConnection();
     }
     m_connections.clear();
+}
+
+void CHostNetwork::RefreshInvalidConnections()
+{
+	auto remiveIt = std::remove_if( m_connections.begin() , m_connections.end() , [ ] ( const Connection& c ) {
+		return c.Socket == INVALID_SOCKET;
+		} );
+	m_connections.erase( remiveIt , m_connections.end() );
 }
 
 void CHostNetwork::AcceptClients()
@@ -239,7 +245,6 @@ if(typeName == typeid(Packet::type).name() + 15) {	\
 
 void CHostNetwork::HandlePacket(Connection& connection, PacketHeader header, const char* body)
 {
-    Debug::Log log("CHostNetwork::HandlePacket()");
 	std::string typeName(header.TypeName);
 
 	PACKET_IF(C2S_JoinRequest)
