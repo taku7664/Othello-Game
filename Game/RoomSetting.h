@@ -5,6 +5,7 @@ struct RoomSetting
 	int     MaxCycle = 0;
 	int		Row = 8;
 	int		Col = 8;
+	int		Timer = 30;
 
 	bool operator == ( const RoomSetting& other )
 	{

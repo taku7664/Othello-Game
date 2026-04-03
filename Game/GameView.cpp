@@ -137,13 +137,13 @@ void GameView::DrawRoomSetting(bool isHost)
 {
 	const ImVec2 availSize = ImGui::GetContentRegionAvail();
 	const float  labelX = availSize.x * 0.3f;
+	static std::string	roomTitle	= GameCore::ActiveRoom->GetRoomTitle();
 	const RoomSetting&	currSetting = GameCore::ActiveRoom->GetRoomSetting();
 	static RoomSetting	newSetting	= currSetting;
-	static std::string	roomTitle	= GameCore::ActiveRoom->GetRoomTitle();
 
-	ImGui::Utillity::DisableScope disableScope( !isHost );
 	ImText()( "방 설정" , 2.0f );
 	ImGui::Separator();
+	ImGui::Utillity::DisableScope disableScope( !isHost );
 	ImGui::PushID( "title" );
 	{
 		static bool isDirty = false;
@@ -183,19 +183,14 @@ void GameView::DrawRoomSetting(bool isHost)
 	ImGui::Separator();
 	ImGui::PushID( "currSetting" );
 	{
+		ImText()( "기본 설정" , 0.7f );
+
 		ImGui::Utillity::TextWithVerticalSeparator( "최대 인원 수" , labelX );
 		if ( ImGui::InputInt( "##max_player" , &newSetting.MaxPlayerCount ) )
 		{
 			newSetting.MaxPlayerCount = ImClamp( newSetting.MaxPlayerCount , 2 , 4 );
 		}
 		ImGui::Utillity::HoveredToolTip( "2 ~ 4 사이 값을 입력해주세요." );
-
-		ImGui::Utillity::TextWithVerticalSeparator( "최대 사이클 수" , labelX );
-		if ( ImGui::InputInt( "##max_cycle" , &newSetting.MaxCycle ) )
-		{
-			newSetting.MaxCycle = ImClamp( newSetting.MaxCycle , 0 , 999 );
-		}
-		ImGui::Utillity::HoveredToolTip( "0 ~ 999 사이 값을 입력해주세요.\n0이면 보드가 전부 찰 때까지 둡니다." );
 
 		ImGui::Utillity::TextWithVerticalSeparator( "보드 열 크기 (X)" , labelX );
 		if ( ImGui::InputInt( "##board_row" , &newSetting.Row , 2 ) )
@@ -212,6 +207,22 @@ void GameView::DrawRoomSetting(bool isHost)
 			newSetting.Col = ImClamp( newSetting.Col , 4 , 16 );
 		}
 		ImGui::Utillity::HoveredToolTip( "4 ~ 16 사이 값을 입력해주세요.\n2의 배수를 입력해주세요." );
+
+		ImText()( "고급 설정" , 0.7f );
+
+		ImGui::Utillity::TextWithVerticalSeparator( "최대 사이클 수" , labelX );
+		if ( ImGui::InputInt( "##max_cycle" , &newSetting.MaxCycle ) )
+		{
+			newSetting.MaxCycle = ImClamp( newSetting.MaxCycle , 0 , 999 );
+		}
+		ImGui::Utillity::HoveredToolTip( "0 ~ 999 사이 값을 입력해주세요.\n0이면 보드가 전부 찰 때까지 둡니다." );
+
+		ImGui::Utillity::TextWithVerticalSeparator( "제한 시간" , labelX );
+		if ( ImGui::InputInt( "##timer" , &newSetting.Timer ) )
+		{
+			newSetting.Timer = ImClamp( newSetting.Timer , 0 , 999 );
+		}
+		ImGui::Utillity::HoveredToolTip( "0 ~ 999 사이 값을 입력해주세요.\n0이면 제한 시간이 없습니다." );
 
 		bool isDirty = newSetting != currSetting;
 		{
