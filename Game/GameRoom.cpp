@@ -3,7 +3,7 @@
 
 GameRoom::GameRoom()
 	: m_roomTitle()
-	, m_roomState(ROOM_STATE_WAITING)
+	, m_roomState(ROOM_STATE_NONE)
 	, m_refreshFlags(0)
 	, m_hostPlayer(nullptr)
 	, m_localPlayer(nullptr)
