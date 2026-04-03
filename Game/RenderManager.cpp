@@ -22,7 +22,6 @@ RenderManager::RenderManager()
 
 RenderManager::~RenderManager()
 {
-    Finalize();
 }
 
 bool RenderManager::Initialize(HINSTANCE hInstance, int width, int height, const wchar_t* title)
