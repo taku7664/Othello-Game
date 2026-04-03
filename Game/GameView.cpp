@@ -161,19 +161,25 @@ void GameView::DrawRoomSetting(bool isHost)
 			int port = GameCore::ClientServer ? (int)GameCore::ClientServer->GetPort() : 0;
 			ImGui::InputInt( "##room_port" , &port , 0 );
 		}
-		if ( ImGui::Button( "변경" ) )
 		{
-			if ( isDirty )
+			ImGui::Utillity::DisableScope disableScope( !isDirty );
+			if ( ImGui::Button( "변경" ) )
 			{
-				GameCore::ActiveRoom->SetRoomTitle( roomTitle.c_str() );
-				isDirty = false;
+				if ( isDirty )
+				{
+					GameCore::ActiveRoom->SetRoomTitle( roomTitle.c_str() );
+					isDirty = false;
+				}
 			}
 		}
 		ImGui::SameLine();
-		if ( ImGui::Button( "취소" ) )
 		{
-			roomTitle = GameCore::ActiveRoom->GetRoomTitle();
-			isDirty = false;
+			ImGui::Utillity::DisableScope disableScope( !isDirty );
+			if ( ImGui::Button( "취소" ) )
+			{
+				roomTitle = GameCore::ActiveRoom->GetRoomTitle();
+				isDirty = false;
+			}
 		}
 	}
 	ImGui::PopID();
@@ -207,25 +213,31 @@ void GameView::DrawRoomSetting(bool isHost)
 		}
 		ImGui::Utillity::HoveredToolTip( "4 ~ 16 사이 값을 입력해주세요.\n2의 배수를 입력해주세요." );
 
-		if ( ImGui::Button( "변경" ) )
 		{
-			if ( isDirty )
+			ImGui::Utillity::DisableScope disableScope( !isDirty );
+			if (ImGui::Button( "변경" ) )
 			{
-				RoomSetting setting{
-					.MaxPlayerCount = ( size_t ) maxPlayerCount,
-					.Row = ( size_t ) row, .Col = ( size_t ) col
-				};
-				GameCore::ActiveRoom->SetRoomSetting( setting );
-				isDirty = false;
+				if ( isDirty )
+				{
+					RoomSetting setting{
+						.MaxPlayerCount = ( size_t ) maxPlayerCount,
+						.Row = ( size_t ) row, .Col = ( size_t ) col
+					};
+					GameCore::ActiveRoom->SetRoomSetting( setting );
+					isDirty = false;
+				}
 			}
 		}
 		ImGui::SameLine();
-		if ( ImGui::Button( "취소" ) )
 		{
-			maxPlayerCount = ( int ) setting.MaxPlayerCount;
-			row = ( int ) setting.Row;
-			col = ( int ) setting.Col;
-			isDirty = false;
+			ImGui::Utillity::DisableScope disableScope( !isDirty );
+			if ( ImGui::Button( "취소" ) )
+			{
+				maxPlayerCount = ( int ) setting.MaxPlayerCount;
+				row = ( int ) setting.Row;
+				col = ( int ) setting.Col;
+				isDirty = false;
+			}
 		}
 		ImGui::SameLine();
 		if ( ImGui::Button( "기본 값" ) )
@@ -237,6 +249,12 @@ void GameView::DrawRoomSetting(bool isHost)
 			GameCore::ActiveRoom->SetRoomSetting( origin );
 			isDirty = false;
 		}
+	}
+	ImGui::PopID();
+	ImGui::Separator();
+	ImGui::PushID( "color" );
+	{
+
 	}
 	ImGui::PopID();
 
@@ -437,6 +455,7 @@ void GameView::DrawChatBoard()
 				styleBuilder.PushStyleColor( ImGuiCol_ButtonActive, hoveredColor);
 				styleBuilder.PushStyleColor( ImGuiCol_Text, textColor);
 				ImGui::Button(message[i].Header.c_str(), headerSize);
+				styleBuilder.PopStyle();
 				if(destPlayer && ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
 				{
 					ImGui::OpenPopup(popupID);
