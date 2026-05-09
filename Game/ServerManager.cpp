@@ -153,8 +153,17 @@ void ServerManager::Finalize()
 
 void ServerManager::AddEventHandler(INetworkEventHandler* handler)
 {
+	if ( nullptr == handler )
+	{
+		return;
+	}
+
 	for (auto& h : m_subscriberHandlers)
 	{
+		if ( h == handler )
+		{
+			return;
+		}
 		if (nullptr == h)
 		{
 			h = handler;
@@ -168,6 +177,9 @@ void ServerManager::RemoveEventHandler(INetworkEventHandler* handler)
 {
 	for (auto& h : m_subscriberHandlers)
 	{
-		h = nullptr;
+		if ( h == handler )
+		{
+			h = nullptr;
+		}
 	}
 }
