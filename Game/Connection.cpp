@@ -11,12 +11,21 @@ Connection::~Connection()
 }
 
 Connection::Connection(Connection&& other) noexcept
-    : ID(other.ID), Socket(other.Socket), Address(other.Address), SendQueue(std::move(other.SendQueue))
+    : ID(other.ID)
+    , Socket(other.Socket)
+    , Address(other.Address)
+    , SendQueue(std::move(other.SendQueue))
+    , RecvQueue(std::move(other.RecvQueue))
+    , RecvBuffer(std::move(other.RecvBuffer))
+    , IdleTime(other.IdleTime)
 {
     other.ID = 0;
     other.Socket = INVALID_SOCKET;
     other.Address = {};
     other.SendQueue.clear();
+    other.RecvQueue.clear();
+    other.RecvBuffer.clear();
+    other.IdleTime = 0.0f;
 }
 
 Connection& Connection::operator=(Connection&& other) noexcept
@@ -32,11 +41,17 @@ Connection& Connection::operator=(Connection&& other) noexcept
         Socket = other.Socket;
         Address = other.Address;
         SendQueue = std::move(other.SendQueue);
+        RecvQueue = std::move(other.RecvQueue);
+        RecvBuffer = std::move(other.RecvBuffer);
+        IdleTime = other.IdleTime;
 
         other.ID = 0;
         other.Socket = INVALID_SOCKET;
         other.Address = {};
         other.SendQueue.clear();
+        other.RecvQueue.clear();
+        other.RecvBuffer.clear();
+        other.IdleTime = 0.0f;
     }
     return *this;
 }
@@ -49,17 +64,17 @@ void Connection::SendPackets()
 	}
 
 	Debug::Log log("Connection::SendPackets()");
-	for (int i = 0; i < SendQueue.size();)
+	for (auto iter = SendQueue.begin(); iter != SendQueue.end();)
 	{
-		Buffer& buffer		= SendQueue[i];
+		Buffer& buffer		= *iter;
 		size_t bufferSize	= buffer.size();
 		int sent = send(Socket, (char*)buffer.data(), (int)bufferSize, 0);
 		if (sent > 0)
 		{
-			if (sent == bufferSize)
+			if (static_cast<size_t>(sent) == bufferSize)
 			{
-				++i;
 				log.WriteLine(Debug::LOG_INFO, bufferSize, "bytes send succeed.");
+				iter = SendQueue.erase(iter);
 			}
 			else
 			{
@@ -69,11 +84,15 @@ void Connection::SendPackets()
 		}
 		else
 		{
-            ++i;
-            log.WriteLine(Debug::LOG_WARNING, "[WARN] send() failed with error: ", WSAGetLastError());
+			const int err = WSAGetLastError();
+			if ( err == WSAEWOULDBLOCK )
+			{
+				break;
+			}
+			log.WriteLine(Debug::LOG_WARNING, "[WARN] send() failed with error: ", err);
+			iter = SendQueue.erase(iter);
 		}
 	}
-	SendQueue.clear();
 }
 
 // TODO: 후에 StreamQueue로 변경
@@ -147,9 +166,11 @@ void Connection::ResetConnection()
 	{
 		closesocket(Socket);
 	}
+	ID = 0;
 	Socket = INVALID_SOCKET;
 	Address = {};
     SendQueue.clear();
     RecvQueue.clear();
     RecvBuffer.clear();
+	IdleTime = 0.0f;
 }
