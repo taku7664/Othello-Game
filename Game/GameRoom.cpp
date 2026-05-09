@@ -39,11 +39,6 @@ void GameRoom::Update()
 	{
 		player->Update();
 	}
-
-	if ( IsReadyAllPlayers() && GameCore::HostServer )
-	{
-
-	}
 }
 
 void GameRoom::RefreshFromPacket(const Packet::Com_RoomRefreshed& packet, bool notify )
@@ -83,14 +78,21 @@ void GameRoom::Clear()
 {
 	m_roomTitle = "";
 	m_roomState = ROOM_STATE_NONE;
+	m_refreshFlags.Clear();
 	m_hostPlayer = nullptr;
 	m_localPlayer = nullptr;
 	m_players.clear();
 	m_gameBoard.Clear();
+	m_voteTimer = 0.0f;
 }
 
 void GameRoom::SetRoomTitle(const char* title, bool dirty)
 {
+	if ( nullptr == title )
+	{
+		title = "";
+	}
+
 	if ( m_roomTitle != title )
 	{
 		m_roomTitle = title;
@@ -136,8 +138,8 @@ RoomState GameRoom::GetRoomState() const
 bool GameRoom::CanStartGame() const
 {
 	const size_t playerCount = m_players.size();
-	const size_t maxPlayerCount = m_roomSetting.MaxPlayerCount;
-	if (playerCount < 2 && playerCount > maxPlayerCount)
+	const size_t maxPlayerCount = static_cast<size_t>( m_roomSetting.MaxPlayerCount );
+	if ( playerCount < 2 || playerCount > maxPlayerCount )
 	{
 		return false;
 	}
@@ -227,11 +229,19 @@ void GameRoom::UpdateRoomTitle()
 
 void GameRoom::StartGame()
 {
+	if ( nullptr == m_localPlayer )
+	{
+		return;
+	}
+
 	ImPopupDesc desc {
 		.Title = "게임 시작 요청",
 		.OnRenderEnterFunc = [ this ] ( IImPopupWindow& wnd ) { 
-			m_voteTimer = m_voteTime; 
-			m_localPlayer->SetReady( false );
+			m_voteTimer = m_voteTime;
+			if ( m_localPlayer )
+			{
+				m_localPlayer->SetReady( false );
+			}
 		},
 		.OnRenderStayFunc = [ this ] ( IImPopupWindow& wnd ) { 
 			m_voteTimer -= ImGui::GetIO().DeltaTime;
@@ -275,6 +285,15 @@ void GameRoom::RemovePlayer(GUID guid)
 	});
 	if (iter != m_players.end())
 	{
+		Player* removedPlayer = iter->get();
+		if ( m_hostPlayer == removedPlayer )
+		{
+			m_hostPlayer = nullptr;
+		}
+		if ( m_localPlayer == removedPlayer )
+		{
+			m_localPlayer = nullptr;
+		}
 		m_players.erase(iter);
 	}
 }
@@ -283,13 +302,20 @@ void GameRoom::InitializeGame()
 {
 	if ( m_roomState == ROOM_STATE_WAITING )
 	{
-		// TODO: 세팅 기반 보드 만들기
+		m_gameBoard.Resize( m_roomSetting.Row , m_roomSetting.Col );
+		m_gameBoard.Clear();
 		SetRoomState( ROOM_STATE_GAME_PLAYING );
 	}
 }
 
 void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 {
+	if ( nullptr == m_localPlayer )
+	{
+		wnd.Close();
+		return;
+	}
+
 	ImGui::PushID( this );
 	// Start Game
 	{
@@ -335,7 +361,7 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 			}
 		}
 
-		if ( readyCount == playerCount )
+		if ( playerCount > 0 && readyCount == playerCount )
 		{
 			InitializeGame();
 			wnd.Close();
@@ -350,6 +376,11 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 
 bool GameRoom::IsReadyAllPlayers()
 {
+	if ( m_players.empty() )
+	{
+		return false;
+	}
+
 	for ( auto& player : m_players )
 	{
 		if ( false == player->IsReady() )
@@ -379,5 +410,5 @@ const char* GameRoom::StringToCurrentRoomState()
 	default:
 		break;
 	}
-	return nullptr;
+	return "Unknown";
 }
