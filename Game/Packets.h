@@ -38,6 +38,11 @@ namespace Packet
 		char MainCause[64] = { '\0', };
 		char SubCause[64] = { '\0', };
 	};
+	struct S2C_GameStateRequest
+	{
+		GUID From = GUID_NULL;
+		RoomState State = RoomState::ROOM_STATE_NONE;
+	};
 	struct S2C_PlaceStone
 	{
 		GUID Guid = {};
@@ -66,6 +71,7 @@ namespace Packet
 		BitFlag RefreshFlags = 0;
 		char Nickname[64] = { '\0', };
 		ColorType Color = ColorType::None;
+		bool IsReady = false;
 	};
 	struct Com_RoomRefreshed
 	{

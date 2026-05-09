@@ -70,6 +70,9 @@
     <Filter Include="Framework\Game\Board\BoardCell">
       <UniqueIdentifier>{acdf8194-3d8f-4dba-8338-ad9a2b7ca467}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Window\Popup">
+      <UniqueIdentifier>{f2b1c276-05c4-4622-a2f0-0c5f77b7f982}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -249,6 +252,9 @@
     <ClInclude Include="DebugWindow.h">
       <Filter>Window</Filter>
     </ClInclude>
+    <ClInclude Include="IImPopupWindow.h">
+      <Filter>Framework\Window</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp">
@@ -394,6 +400,15 @@
     </ClCompile>
     <ClCompile Include="DebugWindow.cpp">
       <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="GameView_UpperBar.cpp">
+      <Filter>Window\View</Filter>
+    </ClCompile>
+    <ClCompile Include="GameView_PlayerListBar.cpp">
+      <Filter>Window\View</Filter>
+    </ClCompile>
+    <ClCompile Include="IImPopupWindow.cpp">
+      <Filter>Framework\Window</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

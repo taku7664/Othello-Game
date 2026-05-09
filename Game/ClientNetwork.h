@@ -26,12 +26,12 @@ private:
 private:
 	void Handle_S2C_PlayerJoined(PacketHeader header, const Packet::S2C_PlayerJoined* body);
 	void Handle_S2C_PlayerDisConnected(PacketHeader header, const Packet::S2C_PlayerDisConnected* body);
+	void Handle_S2C_GameStateRequest(PacketHeader header, const Packet::S2C_GameStateRequest* body);
 	void Handle_S2C_PlaceStone(PacketHeader header, const Packet::S2C_PlaceStone* body);
 	void Handle_Com_Error(PacketHeader header, const Packet::Com_Error* body);
 	void Handle_Com_ChatMessage(PacketHeader header, const Packet::Com_ChatMessage* body);
 	void Handle_Com_PlayerRefreshed(PacketHeader header, const Packet::Com_PlayerRefreshed* body);
 	void Handle_Com_RoomRefreshed(PacketHeader header, const Packet::Com_RoomRefreshed* body);
-
 
 private:
 	Connection	m_connection;

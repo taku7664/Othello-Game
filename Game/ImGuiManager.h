@@ -21,7 +21,7 @@ public:
 	bool		DestroyImWindow(ImGuiID id);
 	IImWindow*	FindImWindow(ImGuiID id);
 
-	void OpenPopup(const ImPopupContext* context, std::function<void(ImPopupContext&)> func);
+	void OpenPopup(const ImPopupDesc& desc);
 
 private:
 	std::unordered_map<ImGuiID, std::unique_ptr<CImWindow>> m_imWindowTable;

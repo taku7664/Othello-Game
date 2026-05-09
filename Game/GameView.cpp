@@ -60,62 +60,17 @@ void GameView::ShowGame()
 	const ImVec2 availSize	= ImGui::GetContentRegionAvail();
 	const ImVec2 padding	= style.WindowPadding;
 	const float  height		= ImGui::GetFrameHeight();
-	if (GameCore::GetLocalPlayer() && GameCore::GetLocalPlayer()->IsHost()) 
-	{
-		ImGui::BeginChild( "##UpperGameBar" , ImVec2( 0 , height + padding.y * 2.0f ) , ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse );
-		DrawUpperGameBar();
-		ImGui::EndChild();
-	}
+
+	ImGui::BeginChild( "##UpperGameBar" , ImVec2( 0 , height + padding.y * 2.0f ) , ImGuiChildFlags_Borders , ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse );
+	DrawUpperGameBar();
+	ImGui::EndChild();
 
 	ImGui::BeginChild( "##MainGameBar" , ImVec2( 0 , 0 ) , ImGuiChildFlags_Borders , ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse );
 	DrawMainGameBar();
 	ImGui::EndChild();
 }
 
-void GameView::DrawUpperGameBar()
-{
-	ImGui::Utillity::StyleBuilder styleBuilder;
-	styleBuilder.PushStyleVar( ImGuiStyleVar_FrameRounding , 3.0f );
-	IGameRoom* room = GameCore::ActiveRoom;
 
-	const int hoveredFlags = ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_DelayNormal;
-	{
-		ImGui::Utillity::DisableScope disableScope(room && false == room->CanStartGame());
-		if ( ImGui::Button( "시작" ) )
-		{
-
-		}
-		if( disableScope.IsDisabled() ) 
-			ImGui::Utillity::HoveredToolTip( "게임을 시작하기 위해서는 다음과 같은 조건이 필요합니다.\n- 플레이어가 2명 이상 있어야합니다.\n- 서로 다른 색이 있는 돌이 2개 이상 있어야합니다." , hoveredFlags );
-	}
-	ImGui::SameLine();
-	{
-		ImGui::Utillity::DisableScope disableScope( room && ROOM_STATE_GAME_PLAYING != room->GetRoomState() );
-		if ( ImGui::Button( "종료" ) )
-		{
-
-		}
-		if ( disableScope.IsDisabled() )
-			ImGui::Utillity::HoveredToolTip( "게임을 종료하기 위해서는 게임이 시작한 상태여야합니다." , hoveredFlags );
-	}
-	ImGui::SameLine();
-	{
-		const char* popupID = "Setting";
-		if ( ImGui::Button( "설정" ) )
-		{
-			ImGui::OpenPopup( popupID );
-		}
-		if ( ImGui::BeginPopup( popupID ) )
-		{
-			ImGui::Text( "Hello from popup!" );
-
-			if ( ImGui::MenuItem( "Close" ) )
-				ImGui::CloseCurrentPopup();
-
-			ImGui::EndPopup();
-		}
-	}
-}
 
 void GameView::DrawMainGameBar()
 {
@@ -301,74 +256,6 @@ void GameView::ShowChat()
 			GameCore::GetLocalPlayer()->SendChatMessage(inputBuffer);
 		}
 		inputBuffer[ 0 ] = '\0';
-	}
-}
-
-void GameView::DrawPlayerList()
-{
-	ImGuiStyle&		style		= ImGui::GetStyle();
-	const float		rounding	= 3.0f;
-	const ImVec2	availSize	= ImGui::GetContentRegionAvail();
-	const char*		popupID		= "##player_popup";
-	if (GameCore::ActiveRoom)
-	{
-		size_t playerCount = GameCore::ActiveRoom->GetCurrentPlayerCount();
-		for(size_t i = 0; i < playerCount; ++i)
-		{
-			IPlayer* player = GameCore::ActiveRoom->GetPlayerFromIndex(i);
-			if (player)
-			{
-				const bool		isHost = player->IsHost();
-				const bool		isLocal = player->IsLocal();
-				const ImU32		defaultColor = IM_COL32( 255 , 255 , 255 , 40 );
-				const ImU32		hoveredColor = IM_COL32( 255 , 255 , 255 , 20 );
-				const ImU32		activeColor  = IM_COL32( 255 , 255 , 255 , 60 );
-				const ImVec4	nameColor	 = ImGui::Utillity::ColorFromGuid( player->GetGUID() );
-				const ImVec4	stoneColor	 = ColorTypeToImVec4( player->GetColorType() );
-				const ImVec2    cursorPos	 = ImGui::GetCursorPos();
-
-				std::string label = std::format( "{}{}{}" ,
-					player->GetNickName() ,
-					isHost ? " (Host)" : "" ,
-					isLocal ? " (Local)" : "" );
-				
-				ImGui::Utillity::StyleBuilder styleBuilder;
-				styleBuilder.PushStyleVar( ImGuiStyleVar_FrameRounding , rounding );
-				styleBuilder.PushStyleColor( ImGuiCol_Button , defaultColor );
-				styleBuilder.PushStyleColor( ImGuiCol_ButtonHovered , hoveredColor );
-				styleBuilder.PushStyleColor( ImGuiCol_ButtonActive , activeColor );
-				ImGui::PushID( (int)i );
-				bool clickedLeft = ImGui::Button( "##Players", ImVec2(availSize.x, 0) );
-				bool clickedRight = ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right);
-				ImGui::SameLine( cursorPos.x + style.FramePadding.x );
-				{
-					ImGui::Utillity::StyleBuilder styleBuilder;
-					styleBuilder.PushStyleColor( ImGuiCol_Text , stoneColor );
-					ImGui::TextUnformatted( "●" );
-				}
-				ImGui::SameLine();
-				{
-					ImGui::Utillity::StyleBuilder styleBuilder;
-					styleBuilder.PushStyleColor( ImGuiCol_Text , nameColor );
-					ImGui::TextUnformatted( label.c_str() );
-				}
-				styleBuilder.PopStyle();
-				if (GameCore::HostServer && (clickedLeft || clickedRight))
-				{
-					ImGui::OpenPopup(popupID);
-				}
-				if (ImGui::BeginPopup(popupID))
-				{
-					DrawPlayerPopup(player);
-					ImGui::EndPopup();
-				}
-				ImGui::PopID();
-			}
-		}
-	}
-	else
-	{
-		ImGui::Text( "No active room." );
 	}
 }
 

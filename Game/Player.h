@@ -8,6 +8,7 @@ class Player : public IPlayer
 		REFRESH_FLAG_NONE = 0,
 		REFRESH_FLAG_NICKNAME = 1 << 0,
 		REFRESH_FLAG_COLOR = 1 << 1 ,
+		REFRESH_FLAG_READY = 1 << 2 ,
 	};
 public:
 	Player();
@@ -34,14 +35,17 @@ public:
 	void SetColorType(ColorType color) override;
 	ColorType GetColorType() const override;
 
+	void SetReady(bool isReady) override;
+	bool IsReady() override;
+
 private:
 	int					m_connectionId;
 	GUID				m_guid;
 	const bool			m_bIsHost;
 	const bool			m_bIsLocal;
 
+	BitFlag				m_refreshFlags;
 	std::string			m_nickname;
 	ColorType			m_colorType;
-
-	BitFlag				m_refreshFlags;
+	bool				m_bIsReady;
 };

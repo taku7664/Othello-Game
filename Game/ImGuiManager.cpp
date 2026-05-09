@@ -77,20 +77,7 @@ IImWindow* CImGuiManager::FindImWindow(ImGuiID id)
 	return nullptr;
 }
 
-void CImGuiManager::OpenPopup(const ImPopupContext* context, std::function<void(ImPopupContext&)> func)
+void CImGuiManager::OpenPopup(const ImPopupDesc& desc)
 {
-	if (nullptr == func)
-	{
-		return;
-	}
-	if (context)
-	{
-		CImPopupWindow popup = CImPopupWindow(*context, func);
-		m_imPopupWindowQueue.push(std::move(popup));
-	}
-	else
-	{
-		CImPopupWindow popup = CImPopupWindow(func);
-		m_imPopupWindowQueue.push(std::move(popup));
-	}
+	m_imPopupWindowQueue.push(desc);
 }

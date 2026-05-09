@@ -47,6 +47,8 @@ public:
 	/// <summary> 게임 방의 보드를 반환합니다. </summary>
 	virtual IGameBoard& GetGameBoard() = 0;
 
+	virtual void StartGame() = 0;
+
 	virtual IPlayer* AddPlayer(const PlayerDesc& data) = 0;
 	virtual void	 RemovePlayer(GUID guid) = 0;
 };

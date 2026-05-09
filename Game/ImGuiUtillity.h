@@ -15,8 +15,10 @@ namespace ImGui
 		/// </summary>
 		void TextWithVerticalSeparator(const char* text, float startX = FLT_MAX);
 
-
 		bool HoveredToolTip(const char* toolTip, int flags = ImGuiHoveredFlags_None);
+
+		enum class CheckMarkType { Check, X, Circle, };
+		bool Checkbox(const char* label, bool* v, CheckMarkType checkType = CheckMarkType::Check);
 
 		class StyleBuilder
 		{
@@ -75,8 +77,8 @@ namespace ImGui
 			bool m_disabled = false;
 		};
 
-
 		ImVec4 ColorFromGuid( const GUID& guid );
-
     }
+	void RenderXMark( ImDrawList* drawList , ImVec2 min , ImVec2 max , float thickness = 2.0f );
+	void RenderCircleMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, float thickness = 2.0f);
 }

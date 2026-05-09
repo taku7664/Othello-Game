@@ -134,6 +134,7 @@
     <ClInclude Include="DebugWindow.h" />
     <ClInclude Include="ErrorView.h" />
     <ClInclude Include="GameView.h" />
+    <ClInclude Include="IImPopupWindow.h" />
     <ClInclude Include="imgui_stdlib.h" />
     <ClInclude Include="MasterWindow.h" />
     <ClInclude Include="ImButton.h" />
@@ -195,6 +196,11 @@
     <ClCompile Include="DebugWindow.cpp" />
     <ClCompile Include="ErrorView.cpp" />
     <ClCompile Include="GameView.cpp" />
+    <ClCompile Include="GameView_PlayerListBar.cpp" />
+    <ClCompile Include="GameView_UpperBar.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="IImPopupWindow.cpp" />
     <ClCompile Include="imgui_stdlib.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

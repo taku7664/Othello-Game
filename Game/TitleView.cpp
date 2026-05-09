@@ -35,30 +35,28 @@ void TitleView::OnShow(Context& context)
 	ImGui::SetCursorPosX( ( windowSize.x - buttonSize.x ) * 0.5f );
 	if ( ImGui::Button( "방 만들기" , buttonSize ) )
 	{
-		ImPopupContext popupContext;
-		popupContext.Title = "오셀로 게임 [방 만들기]";
-		popupContext.Flags = ImGuiWindowFlags_AlwaysAutoResize;
-		GameCore::ImGuiManager.OpenPopup( &popupContext , [ this ] ( ImPopupContext& c ) {
-			ShowMakeRoom( c );
-			} );
+		ImPopupDesc desc;
+		desc.Title = "오셀로 게임 [방 만들기]";
+		desc.Flags = ImGuiWindowFlags_AlwaysAutoResize;
+		desc.OnRenderStayFunc = [ this ] ( IImPopupWindow& wnd ) { ShowMakeRoom( wnd ); };
+		GameCore::ImGuiManager.OpenPopup( desc );
 	}
 
 	ImGui::SetCursorPosX( ( windowSize.x - buttonSize.x ) * 0.5f );
 	if ( ImGui::Button( "방 참가하기" , buttonSize ) )
 	{
-		ImPopupContext popupContext;
-		popupContext.Title = "오셀로 게임 [방 참가하기]";
-		popupContext.Flags = ImGuiWindowFlags_AlwaysAutoResize;
-		GameCore::ImGuiManager.OpenPopup( &popupContext , [ this ] ( ImPopupContext& c ) {
-			ShowJoinRoom( c );
-			} );
+		ImPopupDesc desc;
+		desc.Title = "오셀로 게임 [방 참가하기]";
+		desc.Flags = ImGuiWindowFlags_AlwaysAutoResize;
+		desc.OnRenderStayFunc = [ this ] ( IImPopupWindow& wnd ) { ShowJoinRoom( wnd ); };
+		GameCore::ImGuiManager.OpenPopup( desc );
 	}
 
 	ImGui::SetCursorPosY( windowSize.y - creatorSize.y );
 	ImText()( creatorText , 0.8f , ImText::Align::Right );
 }
 
-void TitleView::ShowMakeRoom( ImPopupContext& c )
+void TitleView::ShowMakeRoom( IImPopupWindow& wnd )
 {
 	const float LABEL_WIDTH = 80.0f;
 	const float CONTENT_WIDTH = 130.0f;
@@ -110,16 +108,16 @@ void TitleView::ShowMakeRoom( ImPopupContext& c )
 			GameCore::SetErrorMessage( "방 생성 실패" , Utillity::WCharToString( Debug::Log::GetLastMessage() ).c_str() );
 			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_ERROR );
 		}
-		c.IsOpen = false;
+		wnd.Close();
 	}
 	ImGui::SameLine();
 	if ( ImGui::Button( "취소" , buttonSize ) )
 	{
-		c.IsOpen = false;
+		wnd.Close();
 	}
 }
 
-void TitleView::ShowJoinRoom( ImPopupContext& c )
+void TitleView::ShowJoinRoom( IImPopupWindow& wnd )
 {
 	const float LABEL_WIDTH = 80.0f;
 	const float CONTENT_WIDTH = 130.0f;
@@ -171,13 +169,12 @@ void TitleView::ShowJoinRoom( ImPopupContext& c )
 			GameCore::SetErrorMessage( "방 참가 실패" , Utillity::WCharToString( Debug::Log::GetLastMessage()).c_str() );
 			GameCore::MasterWindow->ChangeFrame( CMasterWindow::FRAME_ERROR );
 		}
-		c.IsOpen = false;
-		
+		wnd.Close();
 	}
 	ImGui::SameLine();
 	if ( ImGui::Button( "취소" , buttonSize ) )
 	{
-		c.IsOpen = false;
+		wnd.Close();
 	}
 }
 

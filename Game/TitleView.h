@@ -12,8 +12,8 @@ public:
 	void OnShow(Context& context) override;
 
 private:
-	void ShowMakeRoom( ImPopupContext& c );
-	void ShowJoinRoom( ImPopupContext& c );
+	void ShowMakeRoom( IImPopupWindow& wnd );
+	void ShowJoinRoom( IImPopupWindow& wnd );
 	static void ShowMakeFail( ImPopupContext& c , const std::string& errorMsg);
 	static void ShowJoinFail( ImPopupContext& c , const std::string& errorMsg);
 

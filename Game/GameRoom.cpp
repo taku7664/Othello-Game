@@ -8,6 +8,7 @@ GameRoom::GameRoom()
 	, m_hostPlayer(nullptr)
 	, m_localPlayer(nullptr)
 	, m_gameBoard(8,8)
+	, m_voteTimer(0.0f)
 {
 }
 
@@ -37,6 +38,11 @@ void GameRoom::Update()
 	for(auto& player : m_players)
 	{
 		player->Update();
+	}
+
+	if ( IsReadyAllPlayers() && GameCore::HostServer )
+	{
+
 	}
 }
 
@@ -148,7 +154,6 @@ bool GameRoom::CanStartGame() const
 		const bool exist = existColor[i];
 		colorCount += exist ? 1 : 0;
 	}
-
 	if(colorCount < 2)
 	{
 		return false;
@@ -220,6 +225,25 @@ void GameRoom::UpdateRoomTitle()
 	GameCore::Renderer.SetWindowTitle(Utillity::CharToWString(str.c_str()));
 }
 
+void GameRoom::StartGame()
+{
+	ImPopupDesc desc {
+		.Title = "게임 시작 요청",
+		.OnRenderEnterFunc = [ this ] ( IImPopupWindow& wnd ) { 
+			m_voteTimer = m_voteTime; 
+			m_localPlayer->SetReady( false );
+		},
+		.OnRenderStayFunc = [ this ] ( IImPopupWindow& wnd ) { 
+			m_voteTimer -= ImGui::GetIO().DeltaTime;
+			ShowVotePopup( wnd ); 
+		},
+		.OnRenderExitFunc = [ this ] ( IImPopupWindow& wnd ) {
+			m_voteTimer = 0.0f;
+		},
+	};
+	GameCore::ImGuiManager.OpenPopup( desc );
+}
+
 IPlayer* GameRoom::AddPlayer(const PlayerDesc& data)
 {
 	Debug::Log log("GameRoom::AddPlayer()");
@@ -255,9 +279,90 @@ void GameRoom::RemovePlayer(GUID guid)
 	}
 }
 
+void GameRoom::InitializeGame()
+{
+	if ( m_roomState == ROOM_STATE_WAITING )
+	{
+		// TODO: 세팅 기반 보드 만들기
+		SetRoomState( ROOM_STATE_GAME_PLAYING );
+	}
+}
+
+void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
+{
+	ImGui::PushID( this );
+	// Start Game
+	{
+		size_t			readyCount = 0;
+		const size_t	playerCount = m_players.size();
+		const int		timer = static_cast<int>( m_voteTimer );
+		const auto		drawLine = [ ] ( bool isReady , const char* nickname ) {
+			ImGui::Utillity::DisableScope disiable; {
+				ImGui::Utillity::Checkbox( "##is_ready" , &isReady );
+			}
+			ImGui::SameLine();
+			ImGui::TextUnformatted( nickname );
+			};
+
+		std::string inner = std::format( "게임을 시작하시겠습니까? ({})" ,
+			timer );
+		ImGui::TextUnformatted( inner.c_str() );
+
+		const float height		= ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.x;
+		const int	childFlags	= ImGuiChildFlags_Borders;
+		const int	windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+		ImGui::BeginChild( "##players" , ImVec2( 0 , height * static_cast<float>(playerCount) ) , childFlags, windowFlags );
+		for ( auto& player : m_players )
+		{
+			const ImVec4 textColor = ImGui::Utillity::ColorFromGuid( player->GetGUID() );
+			ImGui::Utillity::StyleBuilder styleBuilder;
+			styleBuilder.PushStyleColor( ImGuiCol_Text , textColor );
+			drawLine( player->IsReady() , player->GetNickName().c_str() );
+			readyCount += player->IsReady() ? 1 : 0;
+		}
+		ImGui::EndChild();
+		
+		{
+			ImGui::Utillity::DisableScope disiable( m_localPlayer->IsReady() );
+			if ( ImGui::Button( "수락" ) )
+			{
+				m_localPlayer->SetReady( true );
+			}
+			ImGui::SameLine();
+			if ( ImGui::Button( "거절" ) )
+			{
+				wnd.Close();
+			}
+		}
+
+		if ( readyCount == playerCount )
+		{
+			InitializeGame();
+			wnd.Close();
+		}
+		if ( m_voteTimer < 0.0f )
+		{
+			wnd.Close();
+		}
+	}
+	ImGui::PopID();
+}
+
+bool GameRoom::IsReadyAllPlayers()
+{
+	for ( auto& player : m_players )
+	{
+		if ( false == player->IsReady() )
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 const char* GameRoom::StringToCurrentRoomState()
 {
-	switch (m_roomState)
+	switch ( m_roomState )
 	{
 	case ROOM_STATE_NONE:
 		return " ";

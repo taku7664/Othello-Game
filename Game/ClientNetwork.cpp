@@ -187,6 +187,7 @@ void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 	std::string typeName(header.TypeName);
 	PACKET_IF(S2C_PlayerJoined)
 	PACKET_IF(S2C_PlayerDisConnected)
+	PACKET_IF(S2C_GameStateRequest)
 	PACKET_IF(S2C_PlaceStone)
 	PACKET_IF(Com_Error)
 	PACKET_IF(Com_ChatMessage)
@@ -262,6 +263,42 @@ void CClientNetwork::Handle_S2C_PlayerDisConnected(PacketHeader header, const Pa
 			GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
 			GameCore::ActiveRoom->RemovePlayer( body->Guid );
 		}
+	}
+}
+
+void CClientNetwork::Handle_S2C_GameStateRequest( PacketHeader header , const Packet::S2C_GameStateRequest* body )
+{
+	Debug::Log log( "CClientNetwork::Handle_S2C_GameStateRequest()" );
+
+	RoomState		state		= body->State;
+	const char*		nickname	= GameCore::GetPlayerNicknameFromGuid(body->From);
+	ImPopupContext	popupContext;
+
+	switch ( state )
+	{
+	case ROOM_STATE_NONE:
+		break;
+	case ROOM_STATE_WAITING:
+	{
+		if ( GameCore::ActiveRoom )
+		{
+		}
+		break;
+	}
+	case ROOM_STATE_GAME_PLAYING:
+	{
+		if ( GameCore::ActiveRoom )
+		{
+			GameCore::ActiveRoom->StartGame();
+		}
+		break;
+	}
+	case ROOM_STATE_GAME_FINISH:
+	{
+		break;
+	}
+	default:
+		break;
 	}
 }
 

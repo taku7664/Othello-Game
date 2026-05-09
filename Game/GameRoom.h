@@ -35,7 +35,7 @@ public:
 
 	bool CanStartGame() const override;
 
-	size_t GetCurrentPlayerCount() const override;
+	size_t   GetCurrentPlayerCount() const override;
 	IPlayer* GetPlayerFromIndex(size_t index) const override;
 	IPlayer* GetPlayerFromId(int id) const override;
 	IPlayer* GetPlayerFromGuid(GUID guid) const override;
@@ -45,11 +45,18 @@ public:
 	IGameBoard& GetGameBoard() override;
 
 public:
+	void StartGame() override;
+
 	IPlayer* AddPlayer(const PlayerDesc& data) override;
 	void RemovePlayer(GUID guid) override;
 
 private:
+	void InitializeGame();
 	void UpdateRoomTitle();
+
+	void ShowVotePopup( IImPopupWindow& wnd );
+
+	bool IsReadyAllPlayers();
 	const char* StringToCurrentRoomState();
 	
 protected:
@@ -64,4 +71,7 @@ protected:
 	std::vector<std::unique_ptr<Player>> m_players;
 
 	CGameBoard m_gameBoard;
+
+	float m_voteTimer;
+	inline static float m_voteTime = 10.0f;
 };

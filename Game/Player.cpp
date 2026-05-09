@@ -6,8 +6,9 @@ Player::Player()
 	, m_guid(GUID_NULL)
 	, m_bIsHost(false)
 	, m_bIsLocal(false)
-	, m_colorType(ColorType::Black)
 	, m_refreshFlags(REFRESH_FLAG_NONE)
+	, m_colorType(ColorType::Black)
+	, m_bIsReady(false)
 {
 }
 
@@ -16,9 +17,10 @@ Player::Player(const PlayerDesc& data)
 	, m_guid(data.Guid)
 	, m_bIsHost(data.IsHost)
 	, m_bIsLocal(data.IsLocal)
+	, m_refreshFlags(REFRESH_FLAG_NONE)
 	, m_nickname(data.Nickname)
 	, m_colorType(ColorType::Black)
-	, m_refreshFlags(REFRESH_FLAG_NONE)
+	, m_bIsReady(false)
 {
 }
 
@@ -33,9 +35,10 @@ void Player::Update()
 		if (GameCore::ClientServer)
 		{
 			Packet::Com_PlayerRefreshed packet;
-			packet.DestGuid = GetGUID();
-			packet.Color = m_colorType;
+			packet.DestGuid		= GetGUID();
 			packet.RefreshFlags = m_refreshFlags;
+			packet.Color		= m_colorType;
+			packet.IsReady		= m_bIsReady;
 			strcpy_s(packet.Nickname,
 				m_nickname.length() + 1,
 				m_nickname.c_str()
@@ -58,20 +61,6 @@ void Player::SetNickName(const char* nickname)
 const std::string& Player::GetNickName() const
 {
 	return m_nickname;
-}
-
-void Player::SetColorType( ColorType color )
-{
-	if (m_colorType != color)
-	{
-		m_colorType = color;
-		m_refreshFlags += REFRESH_FLAG_COLOR;
-	}
-}
-
-ColorType Player::GetColorType() const
-{
-    return m_colorType;
 }
 
 void Player::SendChatMessage(const char* msgStr)
@@ -124,6 +113,10 @@ void Player::RefreshFromPacket( const Packet::Com_PlayerRefreshed& packet )
 		);
 		GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
 	}
+	if ( packet.RefreshFlags[ REFRESH_FLAG_READY ] )
+	{
+		m_bIsReady = packet.IsReady;
+	}
 }
 
 int Player::GetConnectionID() const
@@ -144,4 +137,32 @@ bool Player::IsHost() const
 bool Player::IsLocal() const
 {
 	return m_bIsLocal;
+}
+
+void Player::SetColorType( ColorType color )
+{
+	if ( m_colorType != color )
+	{
+		m_colorType = color;
+		m_refreshFlags += REFRESH_FLAG_COLOR;
+	}
+}
+
+ColorType Player::GetColorType() const
+{
+	return m_colorType;
+}
+
+void Player::SetReady( bool isReady )
+{
+	if ( m_bIsReady != isReady )
+	{
+		m_bIsReady = isReady;
+		m_refreshFlags += REFRESH_FLAG_READY;
+	}
+}
+
+bool Player::IsReady()
+{
+	return m_bIsReady;
 }

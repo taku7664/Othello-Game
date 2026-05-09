@@ -36,7 +36,11 @@ struct GameCore
 	{
 		return ActiveRoom ? ActiveRoom->GetPlayerFromId( id ) : nullptr;
 	}
-
+	inline static const char* GetPlayerNicknameFromGuid( GUID guid )
+	{
+		IPlayer* dest = GetPlayerFromGuid( guid );
+		return dest ? dest->GetNickName().c_str() : "Unknown";
+	}
 	inline static void SetErrorMessage(const char* title, const char* message)
 	{
 		ErrorTitle = title ? title : "";
