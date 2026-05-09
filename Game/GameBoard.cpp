@@ -11,10 +11,14 @@ void CGameBoard::Resize( size_t raws , size_t cols )
 	m_rows = raws;
 	m_cols = cols;
 	m_cells.clear();
-	m_cells.resize(m_rows);
-	for (auto& row : m_cells)
+	m_cells.resize( m_rows );
+	for ( size_t r = 0; r < m_rows; ++r )
 	{
-		row.resize(m_cols);
+		m_cells[ r ].reserve( m_cols );
+		for ( size_t c = 0; c < m_cols; ++c )
+		{
+			m_cells[ r ].emplace_back( r , c );
+		}
 	}
 	m_stoneCount = 0;
 }
@@ -28,7 +32,7 @@ void CGameBoard::Clear(ColorType color)
 			m_cells[ r ][ c ].SetColor( color );
 		}
 	}
-	m_stoneCount = 0;
+	m_stoneCount = ( color == ColorType::None ) ? 0 : m_rows * m_cols;
 }
 
 bool CGameBoard::IsExistStone( size_t row , size_t col ) const
@@ -44,32 +48,44 @@ bool CGameBoard::IsExistStone( size_t row , size_t col ) const
 
 bool CGameBoard::IsValidCoord( size_t row , size_t col ) const
 {
-	return row >= 0 && row < m_rows && col >= 0 && col < m_cols;
+	return row < m_rows && col < m_cols;
 }
 
 bool CGameBoard::PlaceStone( ColorType color , size_t row , size_t col )
 {
-	if ( IsValidCoord( row , col ) )
+	if ( color == ColorType::None || false == IsValidCoord( row , col ) )
 	{
-		CBoardCell& cell = m_cells[ row ][ col ];
-		cell.SetColor( color );
-		++m_stoneCount;
-		// TODO: 돌이 놓인 위치를 저장해서 나중에 제거할 때 활용하기
-		return true;
+		return false;
 	}
-	return false;
+
+	CBoardCell& cell = m_cells[ row ][ col ];
+	if ( cell.GetColor() != ColorType::None )
+	{
+		return false;
+	}
+
+	cell.SetColor( color );
+	++m_stoneCount;
+	// TODO: 돌이 놓인 위치를 저장해서 나중에 제거할 때 활용하기
+	return true;
 }
 
 bool CGameBoard::RemoveStone( size_t row , size_t col )
 {
-	if ( IsValidCoord( row , col ) )
+	if ( false == IsValidCoord( row , col ) )
 	{
-		CBoardCell& cell = m_cells[ row ][ col ];
-		cell.SetColor( ColorType::None );
-		--m_stoneCount;
-		return true;
+		return false;
 	}
-	return false;
+
+	CBoardCell& cell = m_cells[ row ][ col ];
+	if ( cell.GetColor() == ColorType::None )
+	{
+		return false;
+	}
+
+	cell.SetColor( ColorType::None );
+	--m_stoneCount;
+	return true;
 }
 
 size_t CGameBoard::GetBoardRows() const
@@ -84,7 +100,7 @@ size_t CGameBoard::GetBoardCols() const
 
 size_t CGameBoard::GetStoneCount() const
 {
-	return size_t();
+	return m_stoneCount;
 }
 
 const CBoardCell& CGameBoard::GetCell( size_t row , size_t col ) const
@@ -97,24 +113,25 @@ void CGameBoard::Show(float cellSize)
 	ImGui::Utillity::StyleBuilder styleBuilder;
 	styleBuilder.PushStyleVar( ImGuiStyleVar_ItemSpacing , ImVec2( 4 , 4 ) );
 	styleBuilder.PushStyleVar( ImGuiStyleVar_FramePadding , ImVec2( 0 , 0 ) );
-	for ( int r = 0; r < m_rows; ++r )
+	for ( size_t r = 0; r < m_rows; ++r )
 	{
-		for ( int c = 0; c < m_cols; ++c )
+		for ( size_t c = 0; c < m_cols; ++c )
 		{
-			if ( m_cells[ r ][ c ].Show( cellSize ) )
+			if ( m_cells[ r ][ c ].Show( cellSize ) && false == IsExistStone( r , c ) )
 			{
-				if (GameCore::ClientServer)
+				IPlayer* localPlayer = GameCore::GetLocalPlayer();
+				if ( GameCore::ClientServer && localPlayer )
 				{
 					Packet::C2S_PlaceStone packet;
-					packet.Color = GameCore::GetLocalPlayer() ? GameCore::GetLocalPlayer()->GetColorType() : ColorType::None;
-					packet.Guid = GameCore::GetLocalPlayer() ? GameCore::GetLocalPlayer()->GetGUID() : GUID_NULL;
+					packet.Color = localPlayer->GetColorType();
+					packet.Guid = localPlayer->GetGUID();
 					packet.Row = r;
 					packet.Col = c;
 					GameCore::ClientServer->SendPacketToServer<Packet::C2S_PlaceStone>(packet);
 				}
-				else
+				else if ( localPlayer )
 				{
-					PlaceStone(GameCore::GetLocalPlayer()->GetColorType() , r , c);
+					PlaceStone( localPlayer->GetColorType() , r , c );
 				}
 			}
 			if ( c != m_cols - 1 )
