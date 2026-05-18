@@ -29,7 +29,7 @@ void GameView::DrawUpperGameBar()
 			}
 			else
 			{
-				//ImGui::Utillity::DisableScope disableScope( false == GameCore::ActiveRoom->CanStartGame() );
+				ImGui::Utillity::DisableScope disableScope( false == GameCore::ActiveRoom->CanStartGame() );
 				if ( ImGui::Button( "게임 시작" ) )
 				{
 					const size_t playerCount = GameCore::ActiveRoom->GetCurrentPlayerCount();
@@ -45,7 +45,7 @@ void GameView::DrawUpperGameBar()
 					};
 					GameCore::HostServer->BroadCast( packet );
 				}
-				//if ( disableScope.IsDisabled() )
+				if ( disableScope.IsDisabled() )
 					ImGui::Utillity::HoveredToolTip( "게임을 시작하기 위해서는 다음과 같은 조건이 필요합니다.\n- 플레이어가 2명 이상 있어야합니다.\n` 플레이어가 전부 준비 완료된 상태여야 합니다.\n- 서로 다른 색이 있는 돌이 2개 이상 있어야합니다." , tooltipFlags );
 			}
 			//ImGui::SameLine();
