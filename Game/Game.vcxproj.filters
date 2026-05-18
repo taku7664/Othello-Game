@@ -25,9 +25,6 @@
     <Filter Include="Framework\Game">
       <UniqueIdentifier>{7f021c76-c535-424c-90db-c1bf43769557}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Framework\Render">
-      <UniqueIdentifier>{683ef857-01ae-4c86-b4c0-3bc9d348037f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Framework\Server\Connection">
       <UniqueIdentifier>{a90c043d-dad2-4f68-8180-583af49182cf}</UniqueIdentifier>
     </Filter>

@@ -240,7 +240,7 @@ void GameRoom::StartGame()
 			m_voteTimer = m_voteTime;
 			if ( m_localPlayer )
 			{
-				m_localPlayer->SetReady( false );
+				m_localPlayer->SetVoteState( VoteState::None );
 			}
 		},
 		.OnRenderStayFunc = [ this ] ( IImPopupWindow& wnd ) { 
@@ -322,12 +322,26 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 		size_t			readyCount = 0;
 		const size_t	playerCount = m_players.size();
 		const int		timer = static_cast<int>( m_voteTimer );
-		const auto		drawLine = [ ] ( bool isReady , const char* nickname ) {
+		const auto		drawLine = [ ] ( Player* player ) {
+
+			const VoteState voteState = player->GetVoteState();
+			const char*		nickname = player->GetNickName().c_str();
+
+			const ImVec4 textColor = ImGui::Utillity::ColorFromGuid( player->GetGUID() );
+			ImGui::Utillity::StyleBuilder styleBuilder;
+			styleBuilder.PushStyleColor( ImGuiCol_Text , textColor );
+
+			ImGui::PushID( nickname );
+			bool checked = voteState != VoteState::None;
+			const auto markType = voteState == VoteState::Rejected
+				? ImGui::Utillity::CheckMarkType::X
+				: ImGui::Utillity::CheckMarkType::Check;
 			ImGui::Utillity::DisableScope disiable; {
-				ImGui::Utillity::Checkbox( "##is_ready" , &isReady );
+				ImGui::Utillity::Checkbox( "##is_ready" , &checked, markType );
 			}
 			ImGui::SameLine();
 			ImGui::TextUnformatted( nickname );
+			ImGui::PopID();
 			};
 
 		std::string inner = std::format( "게임을 시작하시겠습니까? ({})" ,
@@ -338,12 +352,13 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 		const int	childFlags	= ImGuiChildFlags_Borders;
 		const int	windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGui::BeginChild( "##players" , ImVec2( 0 , height * static_cast<float>(playerCount) ) , childFlags, windowFlags );
+		drawLine( m_localPlayer );
 		for ( auto& player : m_players )
 		{
-			const ImVec4 textColor = ImGui::Utillity::ColorFromGuid( player->GetGUID() );
-			ImGui::Utillity::StyleBuilder styleBuilder;
-			styleBuilder.PushStyleColor( ImGuiCol_Text , textColor );
-			drawLine( player->IsReady() , player->GetNickName().c_str() );
+			if( m_localPlayer == player.get() )
+				continue;
+
+			drawLine( player.get() );
 			readyCount += player->IsReady() ? 1 : 0;
 		}
 		ImGui::EndChild();
@@ -352,11 +367,12 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 			ImGui::Utillity::DisableScope disiable( m_localPlayer->IsReady() );
 			if ( ImGui::Button( "수락" ) )
 			{
-				m_localPlayer->SetReady( true );
+				m_localPlayer->SetVoteState( VoteState::Accepted );
 			}
 			ImGui::SameLine();
 			if ( ImGui::Button( "거절" ) )
 			{
+				m_localPlayer->SetVoteState( VoteState::Rejected );
 				wnd.Close();
 			}
 		}

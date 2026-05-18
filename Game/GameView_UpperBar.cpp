@@ -32,6 +32,14 @@ void GameView::DrawUpperGameBar()
 				//ImGui::Utillity::DisableScope disableScope( false == GameCore::ActiveRoom->CanStartGame() );
 				if ( ImGui::Button( "게임 시작" ) )
 				{
+					const size_t playerCount = GameCore::ActiveRoom->GetCurrentPlayerCount();
+					for ( size_t i = 0; i < playerCount; ++i )
+					{
+						if ( IPlayer* player = GameCore::ActiveRoom->GetPlayerFromIndex( i ) )
+						{
+							player->SetVoteState( VoteState::None );
+						}
+					}
 					Packet::S2C_GameStateRequest packet{
 						.State = ROOM_STATE_GAME_PLAYING
 					};
@@ -53,12 +61,6 @@ void GameView::DrawUpperGameBar()
 		}
 		else
 		{
-			const bool isReady = local->IsReady();
-			if ( ImGui::Button( "준비" , buttonSize ) )
-			{
-				local->SetReady( !isReady );
-			}
-			
 		}
 		ImGui::SameLine();
 		ImGui::SetCursorPosX( availSize.x - buttonSize.x + spacing.x );

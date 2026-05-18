@@ -1,4 +1,11 @@
 
+enum class VoteState
+{
+	None,
+	Accepted,
+	Rejected,
+};
+
 struct PlayerProfile
 {
 	const GUID	Guid = GenerateGUID();

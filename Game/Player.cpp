@@ -8,7 +8,7 @@ Player::Player()
 	, m_bIsLocal(false)
 	, m_refreshFlags(REFRESH_FLAG_NONE)
 	, m_colorType(ColorType::Black)
-	, m_bIsReady(false)
+	, m_voteState(VoteState::None)
 {
 }
 
@@ -20,7 +20,7 @@ Player::Player(const PlayerDesc& data)
 	, m_refreshFlags(REFRESH_FLAG_NONE)
 	, m_nickname(data.Nickname)
 	, m_colorType(ColorType::Black)
-	, m_bIsReady(false)
+	, m_voteState(VoteState::None)
 {
 }
 
@@ -38,7 +38,7 @@ void Player::Update()
 			packet.DestGuid		= GetGUID();
 			packet.RefreshFlags = m_refreshFlags;
 			packet.Color		= m_colorType;
-			packet.IsReady		= m_bIsReady;
+			packet.Vote			= m_voteState;
 			strcpy_s(packet.Nickname,
 				m_nickname.length() + 1,
 				m_nickname.c_str()
@@ -113,9 +113,9 @@ void Player::RefreshFromPacket( const Packet::Com_PlayerRefreshed& packet )
 		);
 		GameCore::ChatManager.PushChatMessage( GUID_NULL , msg.c_str() );
 	}
-	if ( packet.RefreshFlags[ REFRESH_FLAG_READY ] )
+	if ( packet.RefreshFlags[ REFRESH_FLAG_VOTE ] )
 	{
-		m_bIsReady = packet.IsReady;
+		m_voteState = packet.Vote;
 	}
 }
 
@@ -155,14 +155,24 @@ ColorType Player::GetColorType() const
 
 void Player::SetReady( bool isReady )
 {
-	if ( m_bIsReady != isReady )
-	{
-		m_bIsReady = isReady;
-		m_refreshFlags += REFRESH_FLAG_READY;
-	}
+	SetVoteState( isReady ? VoteState::Accepted : VoteState::None );
 }
 
 bool Player::IsReady()
 {
-	return m_bIsReady;
+	return m_voteState == VoteState::Accepted;
+}
+
+void Player::SetVoteState( VoteState voteState )
+{
+	if ( m_voteState != voteState )
+	{
+		m_voteState = voteState;
+		m_refreshFlags += REFRESH_FLAG_VOTE;
+	}
+}
+
+VoteState Player::GetVoteState()
+{
+	return m_voteState;
 }

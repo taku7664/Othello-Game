@@ -8,7 +8,7 @@ class Player : public IPlayer
 		REFRESH_FLAG_NONE = 0,
 		REFRESH_FLAG_NICKNAME = 1 << 0,
 		REFRESH_FLAG_COLOR = 1 << 1 ,
-		REFRESH_FLAG_READY = 1 << 2 ,
+		REFRESH_FLAG_VOTE = 1 << 2 ,
 	};
 public:
 	Player();
@@ -37,6 +37,8 @@ public:
 
 	void SetReady(bool isReady) override;
 	bool IsReady() override;
+	void SetVoteState(VoteState voteState) override;
+	VoteState GetVoteState() override;
 
 private:
 	int					m_connectionId;
@@ -47,5 +49,5 @@ private:
 	BitFlag				m_refreshFlags;
 	std::string			m_nickname;
 	ColorType			m_colorType;
-	bool				m_bIsReady;
+	VoteState			m_voteState;
 };

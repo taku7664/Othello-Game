@@ -71,7 +71,7 @@ namespace Packet
 		BitFlag RefreshFlags = 0;
 		char Nickname[64] = { '\0', };
 		ColorType Color = ColorType::None;
-		bool IsReady = false;
+		VoteState Vote = VoteState::None;
 	};
 	struct Com_RoomRefreshed
 	{
