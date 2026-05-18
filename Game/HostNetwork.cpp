@@ -344,13 +344,51 @@ void CHostNetwork::Handle_C2S_LeaveRequest( Connection& connection , PacketHeade
 void CHostNetwork::Handle_C2S_PlaceStone( Connection& connection , PacketHeader header , const Packet::C2S_PlaceStone* body )
 {
 	Debug::Log log( "CHostNetwork::Handle_C2S_PlaceStone()" );
-	Packet::S2C_PlaceStone packet;
-	packet.Guid = body->Guid;
-	packet.Row = body->Row;
-	packet.Col = body->Col;
-	for (Connection& c : m_connections)
+
+	IGameRoom* gameRoom = GameCore::ActiveRoom;
+	if ( nullptr == gameRoom || gameRoom->GetRoomState() != ROOM_STATE_GAME_PLAYING )
 	{
-		c.PushPacket<Packet::S2C_PlaceStone>(packet);
+		return;
+	}
+
+	IPlayer* player = gameRoom->GetPlayerFromGuid( body->Guid );
+	if ( nullptr == player )
+	{
+		return;
+	}
+
+	IGameBoard& board = gameRoom->GetGameBoard();
+	if ( false == board.IsValidCoord( body->Row , body->Col ) || board.IsExistStone( body->Row , body->Col ) )
+	{
+		return;
+	}
+
+	const ColorType color = player->GetColorType();
+	if ( color == ColorType::None )
+	{
+		return;
+	}
+
+	Packet::CellChange changes[] = {
+		Packet::CellChange{
+			.Row = body->Row,
+			.Col = body->Col,
+			.Color = color
+		}
+	};
+	board.SetCellColor( body->Row , body->Col , color );
+
+	const size_t changedCount = 1;
+	const size_t bodySize = sizeof( Packet::S2C_PlaceStone ) + sizeof( Packet::CellChange ) * changedCount;
+	std::vector<char> buffer( bodySize );
+	Packet::S2C_PlaceStone* packet = reinterpret_cast<Packet::S2C_PlaceStone*>( buffer.data() );
+	packet->Guid = body->Guid;
+	packet->ChangedCount = changedCount;
+	memcpy( buffer.data() + sizeof( Packet::S2C_PlaceStone ) , changes , sizeof( changes ) );
+
+	for ( Connection& c : m_connections )
+	{
+		c.PushPacket<Packet::S2C_PlaceStone>( *packet , bodySize );
 	}
 }
 

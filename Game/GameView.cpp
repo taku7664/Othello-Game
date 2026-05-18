@@ -78,7 +78,23 @@ void GameView::DrawMainGameBar()
 	{
 		if ( RoomState::ROOM_STATE_WAITING != GameCore::ActiveRoom->GetRoomState() )
 		{
-			GameCore::ActiveRoom->GetGameBoard().Show();
+			size_t clickedRow = 0;
+			size_t clickedCol = 0;
+			IGameBoard& board = GameCore::ActiveRoom->GetGameBoard();
+			if ( DrawGameBoard( board , clickedRow , clickedCol ) )
+			{
+				if ( GameCore::ClientServer )
+				{
+					if ( IPlayer* localPlayer = GameCore::GetLocalPlayer() )
+					{
+						Packet::C2S_PlaceStone packet;
+						packet.Guid = localPlayer->GetGUID();
+						packet.Row = clickedRow;
+						packet.Col = clickedCol;
+						GameCore::ClientServer->SendPacketToServer( packet );
+					}
+				}
+			}
 		}
 		else if ( IPlayer* self = GameCore::GetLocalPlayer() )
 		{
@@ -86,6 +102,79 @@ void GameView::DrawMainGameBar()
 			DrawRoomSetting(isHost);
 		}
 	}
+}
+
+bool GameView::DrawGameBoard( IGameBoard& board , size_t& clickedRow , size_t& clickedCol )
+{
+	const size_t rows = board.GetBoardRows();
+	const size_t cols = board.GetBoardCols();
+	if ( rows == 0 || cols == 0 )
+	{
+		return false;
+	}
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	const ImVec2 availSize = ImGui::GetContentRegionAvail();
+	const float gap = 3.0f;
+	const float cellByWidth = ( availSize.x - gap * static_cast<float>( cols - 1 ) ) / static_cast<float>( cols );
+	const float cellByHeight = ( availSize.y - gap * static_cast<float>( rows - 1 ) ) / static_cast<float>( rows );
+	const float cellSize = ImMax( 8.0f , ImMin( cellByWidth , cellByHeight ) );
+	const ImVec2 boardSize(
+		cellSize * static_cast<float>( cols ) + gap * static_cast<float>( cols - 1 ),
+		cellSize * static_cast<float>( rows ) + gap * static_cast<float>( rows - 1 )
+	);
+	const ImVec2 startCursor = ImGui::GetCursorPos() + ImVec2(
+		ImMax( 0.0f , ( availSize.x - boardSize.x ) * 0.5f ),
+		ImMax( 0.0f , ( availSize.y - boardSize.y ) * 0.5f )
+	);
+
+	bool clicked = false;
+	ImDrawList* drawList = ImGui::GetWindowDrawList();
+	ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing , ImVec2( gap , gap ) );
+	ImGui::PushStyleVar( ImGuiStyleVar_FramePadding , ImVec2( 0 , 0 ) );
+	ImGui::PushStyleColor( ImGuiCol_Button , IM_COL32( 40 , 120 , 40 , 255 ) );
+	ImGui::PushStyleColor( ImGuiCol_ButtonHovered , IM_COL32( 70 , 160 , 70 , 255 ) );
+	ImGui::PushStyleColor( ImGuiCol_ButtonActive , IM_COL32( 30 , 100 , 30 , 255 ) );
+	ImGui::SetCursorPos( startCursor );
+	for ( size_t r = 0; r < rows; ++r )
+	{
+		for ( size_t c = 0; c < cols; ++c )
+		{
+			ImGui::PushID( static_cast<int>( r * cols + c ) );
+			const ImVec2 screenPos = ImGui::GetCursorScreenPos();
+			if ( ImGui::Button( "##cell" , ImVec2( cellSize , cellSize ) ) && board.GetCellColor( r , c ) == ColorType::None )
+			{
+				clicked = true;
+				clickedRow = r;
+				clickedCol = c;
+			}
+
+			const ColorType color = board.GetCellColor( r , c );
+			if ( color != ColorType::None )
+			{
+				const ImVec2 center = screenPos + ImVec2( cellSize , cellSize ) * 0.5f;
+				const float radius = ( cellSize * 0.5f ) - ImMax( 3.0f , cellSize * 0.12f );
+				if ( color == ColorType::Black )
+				{
+					drawList->AddCircleFilled( center , radius , IM_COL32( 20 , 20 , 20 , 255 ) );
+				}
+				else if ( color == ColorType::White )
+				{
+					drawList->AddCircleFilled( center , radius , IM_COL32( 240 , 240 , 240 , 255 ) );
+					drawList->AddCircle( center , radius , IM_COL32( 60 , 60 , 60 , 255 ) , 0 , 2.0f );
+				}
+			}
+			ImGui::PopID();
+			if ( c + 1 < cols )
+			{
+				ImGui::SameLine();
+			}
+		}
+	}
+	ImGui::PopStyleColor( 3 );
+	ImGui::PopStyleVar( 2 );
+
+	return clicked;
 }
 
 void GameView::DrawRoomSetting(bool isHost)

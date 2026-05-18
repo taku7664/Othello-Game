@@ -35,6 +35,25 @@ void CGameBoard::Clear(ColorType color)
 	m_stoneCount = ( color == ColorType::None ) ? 0 : m_rows * m_cols;
 }
 
+void CGameBoard::InitializeOthelloBoard()
+{
+	Clear();
+	if ( m_rows < 2 || m_cols < 2 )
+	{
+		return;
+	}
+
+	const size_t upperRow = ( m_rows / 2 ) - 1;
+	const size_t lowerRow = m_rows / 2;
+	const size_t leftCol = ( m_cols / 2 ) - 1;
+	const size_t rightCol = m_cols / 2;
+
+	SetCellColor( upperRow , leftCol , ColorType::White );
+	SetCellColor( lowerRow , rightCol , ColorType::White );
+	SetCellColor( upperRow , rightCol , ColorType::Black );
+	SetCellColor( lowerRow , leftCol , ColorType::Black );
+}
+
 bool CGameBoard::IsExistStone( size_t row , size_t col ) const
 {
 	if ( IsValidCoord( row , col ) )
@@ -67,6 +86,33 @@ bool CGameBoard::PlaceStone( ColorType color , size_t row , size_t col )
 	cell.SetColor( color );
 	++m_stoneCount;
 	// TODO: 돌이 놓인 위치를 저장해서 나중에 제거할 때 활용하기
+	return true;
+}
+
+bool CGameBoard::SetCellColor( size_t row , size_t col , ColorType color )
+{
+	if ( false == IsValidCoord( row , col ) )
+	{
+		return false;
+	}
+
+	CBoardCell& cell = m_cells[ row ][ col ];
+	const ColorType prevColor = cell.GetColor();
+	if ( prevColor == color )
+	{
+		return true;
+	}
+
+	if ( prevColor == ColorType::None && color != ColorType::None )
+	{
+		++m_stoneCount;
+	}
+	else if ( prevColor != ColorType::None && color == ColorType::None )
+	{
+		--m_stoneCount;
+	}
+
+	cell.SetColor( color );
 	return true;
 }
 
@@ -108,6 +154,15 @@ const CBoardCell& CGameBoard::GetCell( size_t row , size_t col ) const
 	return m_cells[ row ][ col ];
 }
 
+ColorType CGameBoard::GetCellColor( size_t row , size_t col ) const
+{
+	if ( false == IsValidCoord( row , col ) )
+	{
+		return ColorType::None;
+	}
+	return m_cells[ row ][ col ].GetColor();
+}
+
 void CGameBoard::Show(float cellSize)
 {
 	ImGui::Utillity::StyleBuilder styleBuilder;
@@ -117,23 +172,7 @@ void CGameBoard::Show(float cellSize)
 	{
 		for ( size_t c = 0; c < m_cols; ++c )
 		{
-			if ( m_cells[ r ][ c ].Show( cellSize ) && false == IsExistStone( r , c ) )
-			{
-				IPlayer* localPlayer = GameCore::GetLocalPlayer();
-				if ( GameCore::ClientServer && localPlayer )
-				{
-					Packet::C2S_PlaceStone packet;
-					packet.Color = localPlayer->GetColorType();
-					packet.Guid = localPlayer->GetGUID();
-					packet.Row = r;
-					packet.Col = c;
-					GameCore::ClientServer->SendPacketToServer<Packet::C2S_PlaceStone>(packet);
-				}
-				else if ( localPlayer )
-				{
-					PlaceStone( localPlayer->GetColorType() , r , c );
-				}
-			}
+			m_cells[ r ][ c ].Show( cellSize );
 			if ( c != m_cols - 1 )
 				ImGui::SameLine();
 		}

@@ -12,15 +12,18 @@ public:
 	void Show(float cellSize = 48.0f) override;
 	void Resize(size_t row, size_t cols) override;
 	void Clear(ColorType color = ColorType::None) override;
+	void InitializeOthelloBoard() override;
 	bool IsExistStone(size_t row, size_t col) const override;
 	bool IsValidCoord(size_t row, size_t col) const override;
 	bool PlaceStone(ColorType color, size_t raw, size_t col) override;
+	bool SetCellColor(size_t row, size_t col, ColorType color) override;
 	bool RemoveStone(size_t row, size_t col) override;
 
 	size_t GetBoardRows() const override;
 	size_t GetBoardCols() const override;
 	size_t GetStoneCount() const override;
 	const CBoardCell& GetCell(size_t row, size_t col) const override;
+	ColorType GetCellColor(size_t row, size_t col) const override;
 private:
 	size_t m_rows = 0;
 	size_t m_cols = 0;

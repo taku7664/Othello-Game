@@ -46,12 +46,14 @@ public:
 
 public:
 	void StartGame() override;
+	void ApplyGameStartedPacket(const Packet::S2C_GameStarted& packet);
 
 	IPlayer* AddPlayer(const PlayerDesc& data) override;
 	void RemovePlayer(GUID guid) override;
 
 private:
 	void InitializeGame();
+	void BroadcastGameStarted();
 	void UpdateRoomTitle();
 
 	void ShowVotePopup( IImPopupWindow& wnd );

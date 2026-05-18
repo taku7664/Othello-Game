@@ -25,6 +25,11 @@ public:
 	virtual void Clear(ColorType color = ColorType::None) = 0;
 
 	/// <summary>
+	/// 오셀로 시작 배치를 적용합니다.
+	/// </summary>
+	virtual void InitializeOthelloBoard() = 0;
+
+	/// <summary>
 	/// 유효한 좌표인지 반환합니다.
 	/// </summary>
 	/// <param name="row">보드의 x좌표</param>
@@ -47,6 +52,11 @@ public:
 	virtual bool PlaceStone(ColorType color, size_t raw, size_t col) = 0;
 
 	/// <summary>
+	/// 해당 좌표의 색상을 직접 설정합니다.
+	/// </summary>
+	virtual bool SetCellColor(size_t row, size_t col, ColorType color) = 0;
+
+	/// <summary>
 	/// 해당 좌표에 돌을 제거합니다. 돌이 정상적으로 제거된 경우 true를 반환합니다.
 	/// </summary>
 	virtual bool RemoveStone(size_t row, size_t col) = 0;
@@ -59,5 +69,5 @@ public:
 	virtual size_t GetStoneCount() const = 0;
 
 	virtual const CBoardCell& GetCell(size_t row, size_t col) const = 0;
+	virtual ColorType GetCellColor(size_t row, size_t col) const = 0;
 };
-

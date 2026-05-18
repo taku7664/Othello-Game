@@ -303,9 +303,62 @@ void GameRoom::InitializeGame()
 	if ( m_roomState == ROOM_STATE_WAITING )
 	{
 		m_gameBoard.Resize( m_roomSetting.Row , m_roomSetting.Col );
-		m_gameBoard.Clear();
+		m_gameBoard.InitializeOthelloBoard();
 		SetRoomState( ROOM_STATE_GAME_PLAYING );
 	}
+}
+
+void GameRoom::BroadcastGameStarted()
+{
+	if ( nullptr == GameCore::HostServer )
+	{
+		return;
+	}
+
+	InitializeGame();
+
+	const size_t rows = m_gameBoard.GetBoardRows();
+	const size_t cols = m_gameBoard.GetBoardCols();
+	const size_t cellCount = rows * cols;
+	const size_t bodySize = sizeof( Packet::S2C_GameStarted ) + sizeof( Packet::CellChange ) * cellCount;
+	std::vector<char> buffer( bodySize );
+
+	Packet::S2C_GameStarted* packet = reinterpret_cast<Packet::S2C_GameStarted*>( buffer.data() );
+	packet->Rows = rows;
+	packet->Cols = cols;
+	packet->CurrentTurn = ColorType::Black;
+	packet->CellCount = cellCount;
+
+	Packet::CellChange* cells = reinterpret_cast<Packet::CellChange*>( buffer.data() + sizeof( Packet::S2C_GameStarted ) );
+	size_t index = 0;
+	for ( size_t r = 0; r < rows; ++r )
+	{
+		for ( size_t c = 0; c < cols; ++c )
+		{
+			cells[ index++ ] = Packet::CellChange{
+				.Row = r,
+				.Col = c,
+				.Color = m_gameBoard.GetCellColor( r , c )
+			};
+		}
+	}
+
+	GameCore::HostServer->BroadCast( *packet , bodySize );
+}
+
+void GameRoom::ApplyGameStartedPacket( const Packet::S2C_GameStarted& packet )
+{
+	m_gameBoard.Resize( packet.Rows , packet.Cols );
+	m_gameBoard.Clear();
+
+	const char* raw = reinterpret_cast<const char*>( &packet );
+	const Packet::CellChange* cells = reinterpret_cast<const Packet::CellChange*>( raw + sizeof( Packet::S2C_GameStarted ) );
+	for ( size_t i = 0; i < packet.CellCount; ++i )
+	{
+		m_gameBoard.SetCellColor( cells[ i ].Row , cells[ i ].Col , cells[ i ].Color );
+	}
+
+	SetRoomState( ROOM_STATE_GAME_PLAYING );
 }
 
 void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
@@ -353,6 +406,7 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 		const int	windowFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGui::BeginChild( "##players" , ImVec2( 0 , height * static_cast<float>(playerCount) ) , childFlags, windowFlags );
 		drawLine( m_localPlayer );
+		readyCount += m_localPlayer->IsReady() ? 1 : 0;
 		for ( auto& player : m_players )
 		{
 			if( m_localPlayer == player.get() )
@@ -379,7 +433,10 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 
 		if ( playerCount > 0 && readyCount == playerCount )
 		{
-			InitializeGame();
+			if ( GameCore::HostServer )
+			{
+				BroadcastGameStarted();
+			}
 			wnd.Close();
 		}
 		if ( m_voteTimer < 0.0f )

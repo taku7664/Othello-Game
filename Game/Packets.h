@@ -18,7 +18,6 @@ namespace Packet
 		GUID Guid = {};
 		size_t Row = 0;
 		size_t Col = 0;
-		ColorType Color = ColorType::None;
 	};
 
 	////////////////////////
@@ -43,12 +42,23 @@ namespace Packet
 		GUID From = GUID_NULL;
 		RoomState State = RoomState::ROOM_STATE_NONE;
 	};
-	struct S2C_PlaceStone
+	struct CellChange
 	{
-		GUID Guid = {};
 		size_t Row = 0;
 		size_t Col = 0;
 		ColorType Color = ColorType::None;
+	};
+	struct S2C_GameStarted
+	{
+		size_t Rows = 0;
+		size_t Cols = 0;
+		ColorType CurrentTurn = ColorType::Black;
+		size_t CellCount = 0;
+	};
+	struct S2C_PlaceStone
+	{
+		GUID Guid = {};
+		size_t ChangedCount = 0;
 	};
 
 	////////////////////////
