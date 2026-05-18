@@ -6,6 +6,15 @@ enum class VoteState
 	Rejected,
 };
 
+enum class GameFinishReason
+{
+	None,
+	BoardFull,
+	NoLegalMove,
+	MaxCycle,
+	Surrender,
+};
+
 struct PlayerProfile
 {
 	const GUID	Guid = GenerateGUID();

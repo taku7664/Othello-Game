@@ -9,6 +9,15 @@ GameRoom::GameRoom()
 	, m_localPlayer(nullptr)
 	, m_gameBoard(8,8)
 	, m_voteTimer(0.0f)
+	, m_currentTurn(ColorType::Black)
+	, m_winnerColor(ColorType::None)
+	, m_finishReason(GameFinishReason::None)
+	, m_moveCount(0)
+	, m_cycleCount(0)
+	, m_blackStoneCount(0)
+	, m_whiteStoneCount(0)
+	, m_turnRemainTime(0.0f)
+	, m_statusBroadcastTimer(0.0f)
 {
 }
 
@@ -38,6 +47,27 @@ void GameRoom::Update()
 	for(auto& player : m_players)
 	{
 		player->Update();
+	}
+
+	if ( GameCore::HostServer && m_roomState == ROOM_STATE_GAME_PLAYING )
+	{
+		const int timer = m_roomSetting.Timer;
+		if ( timer > 0 )
+		{
+			const float deltaTime = GameCore::Time.GetUnScaledDeltaTime();
+			m_turnRemainTime -= deltaTime;
+			m_statusBroadcastTimer += deltaTime;
+			if ( m_turnRemainTime <= 0.0f )
+			{
+				m_turnRemainTime = 0.0f;
+				AdvanceTurnAfterAction();
+				BroadcastGameStatus( true );
+			}
+			else if ( m_statusBroadcastTimer >= 0.25f )
+			{
+				BroadcastGameStatus();
+			}
+		}
 	}
 }
 
@@ -84,6 +114,15 @@ void GameRoom::Clear()
 	m_players.clear();
 	m_gameBoard.Clear();
 	m_voteTimer = 0.0f;
+	m_currentTurn = ColorType::Black;
+	m_winnerColor = ColorType::None;
+	m_finishReason = GameFinishReason::None;
+	m_moveCount = 0;
+	m_cycleCount = 0;
+	m_blackStoneCount = 0;
+	m_whiteStoneCount = 0;
+	m_turnRemainTime = 0.0f;
+	m_statusBroadcastTimer = 0.0f;
 }
 
 void GameRoom::SetRoomTitle(const char* title, bool dirty)
@@ -217,6 +256,46 @@ IGameBoard& GameRoom::GetGameBoard()
 	return m_gameBoard;
 }
 
+ColorType GameRoom::GetCurrentTurnColor() const
+{
+	return m_currentTurn;
+}
+
+ColorType GameRoom::GetWinnerColor() const
+{
+	return m_winnerColor;
+}
+
+GameFinishReason GameRoom::GetFinishReason() const
+{
+	return m_finishReason;
+}
+
+size_t GameRoom::GetBlackStoneCount() const
+{
+	return m_blackStoneCount;
+}
+
+size_t GameRoom::GetWhiteStoneCount() const
+{
+	return m_whiteStoneCount;
+}
+
+size_t GameRoom::GetMoveCount() const
+{
+	return m_moveCount;
+}
+
+size_t GameRoom::GetCycleCount() const
+{
+	return m_cycleCount;
+}
+
+float GameRoom::GetTurnRemainTime() const
+{
+	return m_turnRemainTime;
+}
+
 void GameRoom::UpdateRoomTitle()
 {
 	std::string str = std::format(
@@ -229,23 +308,34 @@ void GameRoom::UpdateRoomTitle()
 
 void GameRoom::StartGame()
 {
+	OpenVotePopup( ROOM_STATE_GAME_PLAYING );
+}
+
+void GameRoom::CancelGame()
+{
+	OpenVotePopup( ROOM_STATE_WAITING );
+}
+
+void GameRoom::OpenVotePopup( RoomState requestState )
+{
 	if ( nullptr == m_localPlayer )
 	{
 		return;
 	}
 
+	const char* title = requestState == ROOM_STATE_WAITING ? "게임 취소 요청" : "게임 시작 요청";
 	ImPopupDesc desc {
-		.Title = "게임 시작 요청",
-		.OnRenderEnterFunc = [ this ] ( IImPopupWindow& wnd ) { 
+		.Title = title,
+		.OnRenderEnterFunc = [ this ] ( IImPopupWindow& wnd ) {
 			m_voteTimer = m_voteTime;
 			if ( m_localPlayer )
 			{
 				m_localPlayer->SetVoteState( VoteState::None );
 			}
 		},
-		.OnRenderStayFunc = [ this ] ( IImPopupWindow& wnd ) { 
+		.OnRenderStayFunc = [ this, requestState ] ( IImPopupWindow& wnd ) {
 			m_voteTimer -= ImGui::GetIO().DeltaTime;
-			ShowVotePopup( wnd ); 
+			ShowVotePopup( wnd, requestState );
 		},
 		.OnRenderExitFunc = [ this ] ( IImPopupWindow& wnd ) {
 			m_voteTimer = 0.0f;
@@ -304,8 +394,287 @@ void GameRoom::InitializeGame()
 	{
 		m_gameBoard.Resize( m_roomSetting.Row , m_roomSetting.Col );
 		m_gameBoard.InitializeOthelloBoard();
+		m_currentTurn = ColorType::Black;
+		m_winnerColor = ColorType::None;
+		m_finishReason = GameFinishReason::None;
+		m_moveCount = 0;
+		m_cycleCount = 0;
+		CountStones();
+		ResetTurnTimer();
 		SetRoomState( ROOM_STATE_GAME_PLAYING );
 	}
+}
+
+void GameRoom::CountStones()
+{
+	m_blackStoneCount = 0;
+	m_whiteStoneCount = 0;
+	const size_t rows = m_gameBoard.GetBoardRows();
+	const size_t cols = m_gameBoard.GetBoardCols();
+	for ( size_t r = 0; r < rows; ++r )
+	{
+		for ( size_t c = 0; c < cols; ++c )
+		{
+			switch ( m_gameBoard.GetCellColor( r , c ) )
+			{
+			case ColorType::Black:
+				++m_blackStoneCount;
+				break;
+			case ColorType::White:
+				++m_whiteStoneCount;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+}
+
+void GameRoom::ResetTurnTimer()
+{
+	m_turnRemainTime = static_cast<float>( m_roomSetting.Timer );
+	m_statusBroadcastTimer = 0.0f;
+}
+
+ColorType GameRoom::GetOpponentColor( ColorType color ) const
+{
+	if ( color == ColorType::Black )
+	{
+		return ColorType::White;
+	}
+	if ( color == ColorType::White )
+	{
+		return ColorType::Black;
+	}
+	return ColorType::None;
+}
+
+bool GameRoom::CollectFlippedCells( ColorType color , size_t row , size_t col , std::vector<Packet::CellChange>& outFlips ) const
+{
+	if ( color == ColorType::None || false == m_gameBoard.IsValidCoord( row , col ) || m_gameBoard.GetCellColor( row , col ) != ColorType::None )
+	{
+		return false;
+	}
+
+	const ColorType opponent = GetOpponentColor( color );
+	if ( opponent == ColorType::None )
+	{
+		return false;
+	}
+
+	const int directions[ 8 ][ 2 ] = {
+		{ -1, -1 }, { -1, 0 }, { -1, 1 },
+		{ 0, -1 },             { 0, 1 },
+		{ 1, -1 },  { 1, 0 },  { 1, 1 },
+	};
+	const int rows = static_cast<int>( m_gameBoard.GetBoardRows() );
+	const int cols = static_cast<int>( m_gameBoard.GetBoardCols() );
+	const int startRow = static_cast<int>( row );
+	const int startCol = static_cast<int>( col );
+
+	std::vector<Packet::CellChange> totalFlips;
+	for ( const auto& dir : directions )
+	{
+		std::vector<Packet::CellChange> lineFlips;
+		int r = startRow + dir[ 0 ];
+		int c = startCol + dir[ 1 ];
+		while ( r >= 0 && c >= 0 && r < rows && c < cols )
+		{
+			const ColorType cellColor = m_gameBoard.GetCellColor( static_cast<size_t>( r ) , static_cast<size_t>( c ) );
+			if ( cellColor == opponent )
+			{
+				lineFlips.push_back( Packet::CellChange{
+					.Row = static_cast<size_t>( r ),
+					.Col = static_cast<size_t>( c ),
+					.Color = color
+				} );
+			}
+			else if ( cellColor == color )
+			{
+				if ( false == lineFlips.empty() )
+				{
+					totalFlips.insert( totalFlips.end() , lineFlips.begin() , lineFlips.end() );
+				}
+				break;
+			}
+			else
+			{
+				break;
+			}
+
+			r += dir[ 0 ];
+			c += dir[ 1 ];
+		}
+	}
+
+	outFlips.insert( outFlips.end() , totalFlips.begin() , totalFlips.end() );
+	return false == totalFlips.empty();
+}
+
+bool GameRoom::HasLegalMove( ColorType color ) const
+{
+	if ( color == ColorType::None )
+	{
+		return false;
+	}
+
+	const size_t rows = m_gameBoard.GetBoardRows();
+	const size_t cols = m_gameBoard.GetBoardCols();
+	for ( size_t r = 0; r < rows; ++r )
+	{
+		for ( size_t c = 0; c < cols; ++c )
+		{
+			std::vector<Packet::CellChange> flips;
+			if ( CollectFlippedCells( color , r , c , flips ) )
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool GameRoom::IsBoardFull() const
+{
+	const size_t cellCount = m_gameBoard.GetBoardRows() * m_gameBoard.GetBoardCols();
+	return cellCount > 0 && m_gameBoard.GetStoneCount() >= cellCount;
+}
+
+void GameRoom::FinishGame( GameFinishReason reason )
+{
+	CountStones();
+	m_finishReason = reason;
+	if ( m_blackStoneCount > m_whiteStoneCount )
+	{
+		m_winnerColor = ColorType::Black;
+	}
+	else if ( m_whiteStoneCount > m_blackStoneCount )
+	{
+		m_winnerColor = ColorType::White;
+	}
+	else
+	{
+		m_winnerColor = ColorType::None;
+	}
+	SetRoomState( ROOM_STATE_GAME_FINISH );
+	m_turnRemainTime = 0.0f;
+}
+
+void GameRoom::CancelGameConfirmed()
+{
+	m_gameBoard.Clear();
+	m_currentTurn = ColorType::Black;
+	m_winnerColor = ColorType::None;
+	m_finishReason = GameFinishReason::None;
+	m_moveCount = 0;
+	m_cycleCount = 0;
+	m_blackStoneCount = 0;
+	m_whiteStoneCount = 0;
+	m_turnRemainTime = 0.0f;
+	m_statusBroadcastTimer = 0.0f;
+	SetRoomState( ROOM_STATE_WAITING );
+	BroadcastGameStatus( true );
+}
+
+void GameRoom::AdvanceTurnAfterAction()
+{
+	if ( m_roomState != ROOM_STATE_GAME_PLAYING )
+	{
+		return;
+	}
+
+	CountStones();
+	if ( IsBoardFull() )
+	{
+		FinishGame( GameFinishReason::BoardFull );
+		return;
+	}
+
+	const ColorType prevTurn = m_currentTurn;
+	const ColorType opponent = GetOpponentColor( m_currentTurn );
+	const bool opponentCanMove = HasLegalMove( opponent );
+	const bool currentCanMove = HasLegalMove( m_currentTurn );
+	if ( opponentCanMove )
+	{
+		m_currentTurn = opponent;
+	}
+	else if ( currentCanMove )
+	{
+		GameCore::ChatManager.PushChatMessage( GUID_NULL , "둘 수 있는 위치가 없어 턴을 넘깁니다." );
+	}
+	else
+	{
+		FinishGame( GameFinishReason::NoLegalMove );
+		return;
+	}
+
+	if ( prevTurn == ColorType::White && m_currentTurn == ColorType::Black )
+	{
+		++m_cycleCount;
+	}
+	if ( m_roomSetting.MaxCycle > 0 && m_cycleCount >= static_cast<size_t>( m_roomSetting.MaxCycle ) )
+	{
+		FinishGame( GameFinishReason::MaxCycle );
+		return;
+	}
+
+	ResetTurnTimer();
+}
+
+bool GameRoom::TryPlaceStone( GUID guid , size_t row , size_t col , std::vector<Packet::CellChange>& outChanges )
+{
+	if ( m_roomState != ROOM_STATE_GAME_PLAYING )
+	{
+		return false;
+	}
+
+	IPlayer* player = GetPlayerFromGuid( guid );
+	if ( nullptr == player || player->GetColorType() != m_currentTurn )
+	{
+		return false;
+	}
+
+	std::vector<Packet::CellChange> flips;
+	if ( false == CollectFlippedCells( m_currentTurn , row , col , flips ) )
+	{
+		return false;
+	}
+
+	outChanges.push_back( Packet::CellChange{
+		.Row = row,
+		.Col = col,
+		.Color = m_currentTurn
+	} );
+	outChanges.insert( outChanges.end() , flips.begin() , flips.end() );
+
+	for ( const Packet::CellChange& change : outChanges )
+	{
+		m_gameBoard.SetCellColor( change.Row , change.Col , change.Color );
+	}
+	++m_moveCount;
+	AdvanceTurnAfterAction();
+	return true;
+}
+
+bool GameRoom::TrySurrender( GUID guid )
+{
+	if ( m_roomState != ROOM_STATE_GAME_PLAYING )
+	{
+		return false;
+	}
+
+	IPlayer* player = GetPlayerFromGuid( guid );
+	if ( nullptr == player )
+	{
+		return false;
+	}
+
+	m_finishReason = GameFinishReason::Surrender;
+	m_winnerColor = GetOpponentColor( player->GetColorType() );
+	CountStones();
+	SetRoomState( ROOM_STATE_GAME_FINISH );
+	m_turnRemainTime = 0.0f;
+	return true;
 }
 
 void GameRoom::BroadcastGameStarted()
@@ -327,6 +696,14 @@ void GameRoom::BroadcastGameStarted()
 	packet->Rows = rows;
 	packet->Cols = cols;
 	packet->CurrentTurn = ColorType::Black;
+	packet->State = m_roomState;
+	packet->Winner = m_winnerColor;
+	packet->FinishReason = m_finishReason;
+	packet->MoveCount = m_moveCount;
+	packet->CycleCount = m_cycleCount;
+	packet->BlackCount = m_blackStoneCount;
+	packet->WhiteCount = m_whiteStoneCount;
+	packet->TurnRemainTime = m_turnRemainTime;
 	packet->CellCount = cellCount;
 
 	Packet::CellChange* cells = reinterpret_cast<Packet::CellChange*>( buffer.data() + sizeof( Packet::S2C_GameStarted ) );
@@ -358,10 +735,130 @@ void GameRoom::ApplyGameStartedPacket( const Packet::S2C_GameStarted& packet )
 		m_gameBoard.SetCellColor( cells[ i ].Row , cells[ i ].Col , cells[ i ].Color );
 	}
 
-	SetRoomState( ROOM_STATE_GAME_PLAYING );
+	ApplyStatus( packet.State , packet.CurrentTurn , packet.Winner , packet.FinishReason ,
+		packet.MoveCount , packet.CycleCount , packet.BlackCount , packet.WhiteCount , packet.TurnRemainTime );
 }
 
-void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
+void GameRoom::ApplyStatus( RoomState state , ColorType currentTurn , ColorType winner , GameFinishReason reason ,
+	size_t moveCount , size_t cycleCount , size_t blackCount , size_t whiteCount , float turnRemainTime )
+{
+	const RoomState prevState = m_roomState;
+	const GameFinishReason prevReason = m_finishReason;
+	m_currentTurn = currentTurn;
+	m_winnerColor = winner;
+	m_finishReason = reason;
+	m_moveCount = moveCount;
+	m_cycleCount = cycleCount;
+	m_blackStoneCount = blackCount;
+	m_whiteStoneCount = whiteCount;
+	m_turnRemainTime = turnRemainTime;
+	SetRoomState( state );
+	TryOpenGameResultPopup( prevState, prevReason );
+}
+
+void GameRoom::TryOpenGameResultPopup( RoomState prevState , GameFinishReason prevReason )
+{
+	if ( m_roomState != ROOM_STATE_GAME_FINISH || m_finishReason != GameFinishReason::Surrender )
+	{
+		return;
+	}
+	if ( prevState == ROOM_STATE_GAME_FINISH && prevReason == GameFinishReason::Surrender )
+	{
+		return;
+	}
+	OpenGameResultPopup();
+}
+
+void GameRoom::OpenGameResultPopup()
+{
+	const size_t blackCount = m_blackStoneCount;
+	const size_t whiteCount = m_whiteStoneCount;
+	const ColorType winner = m_winnerColor;
+	const auto colorName = [ ] ( ColorType color ) {
+		switch ( color )
+		{
+		case ColorType::Black:
+			return "검정";
+		case ColorType::White:
+			return "하양";
+		default:
+			return "무승부";
+		}
+	};
+	ImPopupDesc desc {
+		.Title = "게임 결과",
+		.Flags = ImGuiWindowFlags_AlwaysAutoResize,
+		.OnRenderStayFunc = [ blackCount, whiteCount, winner, colorName ] ( IImPopupWindow& wnd ) {
+			std::string stoneText = std::format( "돌 수  검정: {} / 하양: {}", blackCount, whiteCount );
+			std::string winnerText = std::format( "승자 색: {}", colorName( winner ) );
+			ImGui::TextUnformatted( stoneText.c_str() );
+			ImGui::TextUnformatted( winnerText.c_str() );
+			ImGui::Separator();
+			if ( ImGui::Button( "확인" , ImVec2( 80.0f , 0.0f ) ) )
+			{
+				wnd.Close();
+			}
+		},
+	};
+	GameCore::ImGuiManager.OpenPopup( desc );
+}
+
+void GameRoom::FillGameStatus( Packet::S2C_GameStatus& packet ) const
+{
+	packet.CurrentTurn = m_currentTurn;
+	packet.State = m_roomState;
+	packet.Winner = m_winnerColor;
+	packet.FinishReason = m_finishReason;
+	packet.MoveCount = m_moveCount;
+	packet.CycleCount = m_cycleCount;
+	packet.BlackCount = m_blackStoneCount;
+	packet.WhiteCount = m_whiteStoneCount;
+	packet.TurnRemainTime = m_turnRemainTime;
+}
+
+void GameRoom::FillPlaceStoneStatus( Packet::S2C_PlaceStone& packet ) const
+{
+	packet.CurrentTurn = m_currentTurn;
+	packet.State = m_roomState;
+	packet.Winner = m_winnerColor;
+	packet.FinishReason = m_finishReason;
+	packet.MoveCount = m_moveCount;
+	packet.CycleCount = m_cycleCount;
+	packet.BlackCount = m_blackStoneCount;
+	packet.WhiteCount = m_whiteStoneCount;
+	packet.TurnRemainTime = m_turnRemainTime;
+}
+
+void GameRoom::BroadcastGameStatus( bool force )
+{
+	if ( nullptr == GameCore::HostServer )
+	{
+		return;
+	}
+	if ( false == force && m_roomState != ROOM_STATE_GAME_PLAYING )
+	{
+		return;
+	}
+
+	Packet::S2C_GameStatus packet;
+	FillGameStatus( packet );
+	GameCore::HostServer->BroadCast( packet );
+	m_statusBroadcastTimer = 0.0f;
+}
+
+void GameRoom::ApplyGameStatusPacket( const Packet::S2C_GameStatus& packet )
+{
+	ApplyStatus( packet.State , packet.CurrentTurn , packet.Winner , packet.FinishReason ,
+		packet.MoveCount , packet.CycleCount , packet.BlackCount , packet.WhiteCount , packet.TurnRemainTime );
+}
+
+void GameRoom::ApplyPlaceStonePacket( const Packet::S2C_PlaceStone& packet )
+{
+	ApplyStatus( packet.State , packet.CurrentTurn , packet.Winner , packet.FinishReason ,
+		packet.MoveCount , packet.CycleCount , packet.BlackCount , packet.WhiteCount , packet.TurnRemainTime );
+}
+
+void GameRoom::ShowVotePopup( IImPopupWindow& wnd, RoomState requestState )
 {
 	if ( nullptr == m_localPlayer )
 	{
@@ -397,7 +894,9 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 			ImGui::PopID();
 			};
 
-		std::string inner = std::format( "게임을 시작하시겠습니까? ({})" ,
+		const char* actionText = requestState == ROOM_STATE_WAITING ? "취소" : "시작";
+		std::string inner = std::format( "게임을 {}하시겠습니까? ({})" ,
+			actionText,
 			timer );
 		ImGui::TextUnformatted( inner.c_str() );
 
@@ -435,7 +934,14 @@ void GameRoom::ShowVotePopup( IImPopupWindow& wnd )
 		{
 			if ( GameCore::HostServer )
 			{
-				BroadcastGameStarted();
+				if ( requestState == ROOM_STATE_WAITING )
+				{
+					CancelGameConfirmed();
+				}
+				else
+				{
+					BroadcastGameStarted();
+				}
 			}
 			wnd.Close();
 		}
@@ -462,6 +968,26 @@ bool GameRoom::IsReadyAllPlayers()
 		}
 	}
 	return true;
+}
+
+const char* GameRoom::GameFinishReasonToString( GameFinishReason reason ) const
+{
+	switch ( reason )
+	{
+	case GameFinishReason::None:
+		return "";
+	case GameFinishReason::BoardFull:
+		return "보드가 가득 찼습니다.";
+	case GameFinishReason::NoLegalMove:
+		return "양쪽 모두 둘 수 있는 위치가 없습니다.";
+	case GameFinishReason::MaxCycle:
+		return "최대 사이클에 도달했습니다.";
+	case GameFinishReason::Surrender:
+		return "항복했습니다.";
+	default:
+		break;
+	}
+	return "Unknown";
 }
 
 const char* GameRoom::StringToCurrentRoomState()

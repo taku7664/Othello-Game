@@ -250,6 +250,7 @@ void CHostNetwork::HandlePacket(Connection& connection, PacketHeader header, con
 	PACKET_IF(C2S_JoinRequest)
 	PACKET_IF(C2S_LeaveRequest)
 	PACKET_IF(C2S_PlaceStone)
+	PACKET_IF(C2S_Surrender)
 	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(Com_PlayerRefreshed)
 }
@@ -345,51 +346,46 @@ void CHostNetwork::Handle_C2S_PlaceStone( Connection& connection , PacketHeader 
 {
 	Debug::Log log( "CHostNetwork::Handle_C2S_PlaceStone()" );
 
-	IGameRoom* gameRoom = GameCore::ActiveRoom;
+	GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom );
 	if ( nullptr == gameRoom || gameRoom->GetRoomState() != ROOM_STATE_GAME_PLAYING )
 	{
 		return;
 	}
 
-	IPlayer* player = gameRoom->GetPlayerFromGuid( body->Guid );
-	if ( nullptr == player )
+	std::vector<Packet::CellChange> changes;
+	if ( false == gameRoom->TryPlaceStone( body->Guid , body->Row , body->Col , changes ) )
 	{
 		return;
 	}
 
-	IGameBoard& board = gameRoom->GetGameBoard();
-	if ( false == board.IsValidCoord( body->Row , body->Col ) || board.IsExistStone( body->Row , body->Col ) )
-	{
-		return;
-	}
-
-	const ColorType color = player->GetColorType();
-	if ( color == ColorType::None )
-	{
-		return;
-	}
-
-	Packet::CellChange changes[] = {
-		Packet::CellChange{
-			.Row = body->Row,
-			.Col = body->Col,
-			.Color = color
-		}
-	};
-	board.SetCellColor( body->Row , body->Col , color );
-
-	const size_t changedCount = 1;
+	const size_t changedCount = changes.size();
 	const size_t bodySize = sizeof( Packet::S2C_PlaceStone ) + sizeof( Packet::CellChange ) * changedCount;
 	std::vector<char> buffer( bodySize );
 	Packet::S2C_PlaceStone* packet = reinterpret_cast<Packet::S2C_PlaceStone*>( buffer.data() );
 	packet->Guid = body->Guid;
+	gameRoom->FillPlaceStoneStatus( *packet );
 	packet->ChangedCount = changedCount;
-	memcpy( buffer.data() + sizeof( Packet::S2C_PlaceStone ) , changes , sizeof( changes ) );
+	memcpy( buffer.data() + sizeof( Packet::S2C_PlaceStone ) , changes.data() , sizeof( Packet::CellChange ) * changedCount );
 
 	for ( Connection& c : m_connections )
 	{
 		c.PushPacket<Packet::S2C_PlaceStone>( *packet , bodySize );
 	}
+}
+
+void CHostNetwork::Handle_C2S_Surrender( Connection& connection , PacketHeader header , const Packet::C2S_Surrender* body )
+{
+	Debug::Log log( "CHostNetwork::Handle_C2S_Surrender()" );
+
+	GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom );
+	if ( nullptr == gameRoom || false == gameRoom->TrySurrender( body->Guid ) )
+	{
+		return;
+	}
+
+	Packet::S2C_GameStatus packet;
+	gameRoom->FillGameStatus( packet );
+	BroadCast( packet );
 }
 
 void CHostNetwork::Handle_Com_ChatMessage(Connection& connection, PacketHeader header, const Packet::Com_ChatMessage* body)

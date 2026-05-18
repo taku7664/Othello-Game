@@ -19,6 +19,10 @@ namespace Packet
 		size_t Row = 0;
 		size_t Col = 0;
 	};
+	struct C2S_Surrender
+	{
+		GUID Guid = {};
+	};
 
 	////////////////////////
 	/// Server to Client
@@ -53,12 +57,41 @@ namespace Packet
 		size_t Rows = 0;
 		size_t Cols = 0;
 		ColorType CurrentTurn = ColorType::Black;
+		RoomState State = RoomState::ROOM_STATE_GAME_PLAYING;
+		ColorType Winner = ColorType::None;
+		GameFinishReason FinishReason = GameFinishReason::None;
+		size_t MoveCount = 0;
+		size_t CycleCount = 0;
+		size_t BlackCount = 0;
+		size_t WhiteCount = 0;
+		float TurnRemainTime = 0.0f;
 		size_t CellCount = 0;
 	};
 	struct S2C_PlaceStone
 	{
 		GUID Guid = {};
+		ColorType CurrentTurn = ColorType::Black;
+		RoomState State = RoomState::ROOM_STATE_GAME_PLAYING;
+		ColorType Winner = ColorType::None;
+		GameFinishReason FinishReason = GameFinishReason::None;
+		size_t MoveCount = 0;
+		size_t CycleCount = 0;
+		size_t BlackCount = 0;
+		size_t WhiteCount = 0;
+		float TurnRemainTime = 0.0f;
 		size_t ChangedCount = 0;
+	};
+	struct S2C_GameStatus
+	{
+		ColorType CurrentTurn = ColorType::Black;
+		RoomState State = RoomState::ROOM_STATE_GAME_PLAYING;
+		ColorType Winner = ColorType::None;
+		GameFinishReason FinishReason = GameFinishReason::None;
+		size_t MoveCount = 0;
+		size_t CycleCount = 0;
+		size_t BlackCount = 0;
+		size_t WhiteCount = 0;
+		float TurnRemainTime = 0.0f;
 	};
 
 	////////////////////////

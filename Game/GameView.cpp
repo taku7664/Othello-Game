@@ -78,14 +78,19 @@ void GameView::DrawMainGameBar()
 	{
 		if ( RoomState::ROOM_STATE_WAITING != GameCore::ActiveRoom->GetRoomState() )
 		{
+			DrawGameStatus();
 			size_t clickedRow = 0;
 			size_t clickedCol = 0;
 			IGameBoard& board = GameCore::ActiveRoom->GetGameBoard();
-			if ( DrawGameBoard( board , clickedRow , clickedCol ) )
+			IPlayer* localPlayer = GameCore::GetLocalPlayer();
+			const bool canClick = localPlayer &&
+				GameCore::ActiveRoom->GetRoomState() == ROOM_STATE_GAME_PLAYING &&
+				localPlayer->GetColorType() == GameCore::ActiveRoom->GetCurrentTurnColor();
+			if ( DrawGameBoard( board , canClick , clickedRow , clickedCol ) )
 			{
 				if ( GameCore::ClientServer )
 				{
-					if ( IPlayer* localPlayer = GameCore::GetLocalPlayer() )
+					if ( localPlayer )
 					{
 						Packet::C2S_PlaceStone packet;
 						packet.Guid = localPlayer->GetGUID();
@@ -104,7 +109,71 @@ void GameView::DrawMainGameBar()
 	}
 }
 
-bool GameView::DrawGameBoard( IGameBoard& board , size_t& clickedRow , size_t& clickedCol )
+void GameView::DrawGameStatus()
+{
+	IGameRoom* room = GameCore::ActiveRoom;
+	if ( nullptr == room )
+	{
+		return;
+	}
+
+	const auto colorName = [ ] ( ColorType color ) {
+		switch ( color )
+		{
+		case ColorType::Black:
+			return "검정";
+		case ColorType::White:
+			return "하양";
+		default:
+			return "없음";
+		}
+	};
+	const auto finishReason = [ ] ( GameFinishReason reason ) {
+		switch ( reason )
+		{
+		case GameFinishReason::BoardFull:
+			return "보드가 가득 찼습니다.";
+		case GameFinishReason::NoLegalMove:
+			return "양쪽 모두 둘 수 있는 위치가 없습니다.";
+		case GameFinishReason::MaxCycle:
+			return "최대 사이클에 도달했습니다.";
+		case GameFinishReason::Surrender:
+			return "항복했습니다.";
+		default:
+			return "";
+		}
+	};
+
+	if ( room->GetRoomState() == ROOM_STATE_GAME_FINISH )
+	{
+		std::string result = std::format(
+			"게임 종료 | 승자: {} | 검정 {} : 하양 {} | {}",
+			colorName( room->GetWinnerColor() ),
+			room->GetBlackStoneCount(),
+			room->GetWhiteStoneCount(),
+			finishReason( room->GetFinishReason() )
+		);
+		ImGui::TextUnformatted( result.c_str() );
+	}
+	else
+	{
+		std::string status = std::format(
+			"현재 턴: {} | 검정 {} : 하양 {} | 내 제한 시간: {} | 수: {} | 사이클: {}",
+			colorName( room->GetCurrentTurnColor() ),
+			room->GetBlackStoneCount(),
+			room->GetWhiteStoneCount(),
+			( GameCore::GetLocalPlayer() && GameCore::GetLocalPlayer()->GetColorType() == room->GetCurrentTurnColor() )
+				? std::to_string( ImMax( 0, static_cast<int>( std::ceil( room->GetTurnRemainTime() ) ) ) )
+				: std::string( "-" ),
+			room->GetMoveCount(),
+			room->GetCycleCount()
+		);
+		ImGui::TextUnformatted( status.c_str() );
+	}
+	ImGui::Separator();
+}
+
+bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , size_t& clickedRow , size_t& clickedCol )
 {
 	const size_t rows = board.GetBoardRows();
 	const size_t cols = board.GetBoardCols();
@@ -142,14 +211,17 @@ bool GameView::DrawGameBoard( IGameBoard& board , size_t& clickedRow , size_t& c
 		{
 			ImGui::PushID( static_cast<int>( r * cols + c ) );
 			const ImVec2 screenPos = ImGui::GetCursorScreenPos();
-			if ( ImGui::Button( "##cell" , ImVec2( cellSize , cellSize ) ) && board.GetCellColor( r , c ) == ColorType::None )
+			const ColorType color = board.GetCellColor( r , c );
 			{
-				clicked = true;
-				clickedRow = r;
-				clickedCol = c;
+				ImGui::Utillity::DisableScope disableScope( !canClick || color != ColorType::None );
+				if ( ImGui::Button( "##cell" , ImVec2( cellSize , cellSize ) ) )
+				{
+					clicked = true;
+					clickedRow = r;
+					clickedCol = c;
+				}
 			}
 
-			const ColorType color = board.GetCellColor( r , c );
 			if ( color != ColorType::None )
 			{
 				const ImVec2 center = screenPos + ImVec2( cellSize , cellSize ) * 0.5f;

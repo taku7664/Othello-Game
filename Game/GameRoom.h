@@ -43,10 +43,25 @@ public:
 	IPlayer* GetHostPlayer() const override;
 
 	IGameBoard& GetGameBoard() override;
+	ColorType GetCurrentTurnColor() const override;
+	ColorType GetWinnerColor() const override;
+	GameFinishReason GetFinishReason() const override;
+	size_t GetBlackStoneCount() const override;
+	size_t GetWhiteStoneCount() const override;
+	size_t GetMoveCount() const override;
+	size_t GetCycleCount() const override;
+	float GetTurnRemainTime() const override;
 
 public:
 	void StartGame() override;
+	void CancelGame() override;
 	void ApplyGameStartedPacket(const Packet::S2C_GameStarted& packet);
+	void ApplyGameStatusPacket(const Packet::S2C_GameStatus& packet);
+	void ApplyPlaceStonePacket(const Packet::S2C_PlaceStone& packet);
+	bool TryPlaceStone(GUID guid, size_t row, size_t col, std::vector<Packet::CellChange>& outChanges);
+	bool TrySurrender(GUID guid);
+	void FillPlaceStoneStatus(Packet::S2C_PlaceStone& packet) const;
+	void FillGameStatus(Packet::S2C_GameStatus& packet) const;
 
 	IPlayer* AddPlayer(const PlayerDesc& data) override;
 	void RemovePlayer(GUID guid) override;
@@ -54,9 +69,25 @@ public:
 private:
 	void InitializeGame();
 	void BroadcastGameStarted();
+	void BroadcastGameStatus(bool force = false);
+	void ApplyStatus(RoomState state, ColorType currentTurn, ColorType winner, GameFinishReason reason,
+		size_t moveCount, size_t cycleCount, size_t blackCount, size_t whiteCount, float turnRemainTime);
+	void TryOpenGameResultPopup(RoomState prevState, GameFinishReason prevReason);
+	void OpenGameResultPopup();
+	bool CollectFlippedCells(ColorType color, size_t row, size_t col, std::vector<Packet::CellChange>& outFlips) const;
+	bool HasLegalMove(ColorType color) const;
+	bool IsBoardFull() const;
+	void CountStones();
+	void ResetTurnTimer();
+	void AdvanceTurnAfterAction();
+	void FinishGame(GameFinishReason reason);
+	void CancelGameConfirmed();
+	ColorType GetOpponentColor(ColorType color) const;
+	const char* GameFinishReasonToString(GameFinishReason reason) const;
 	void UpdateRoomTitle();
 
-	void ShowVotePopup( IImPopupWindow& wnd );
+	void OpenVotePopup(RoomState requestState);
+	void ShowVotePopup( IImPopupWindow& wnd, RoomState requestState );
 
 	bool IsReadyAllPlayers();
 	const char* StringToCurrentRoomState();
@@ -75,5 +106,14 @@ protected:
 	CGameBoard m_gameBoard;
 
 	float m_voteTimer;
+	ColorType m_currentTurn;
+	ColorType m_winnerColor;
+	GameFinishReason m_finishReason;
+	size_t m_moveCount;
+	size_t m_cycleCount;
+	size_t m_blackStoneCount;
+	size_t m_whiteStoneCount;
+	float m_turnRemainTime;
+	float m_statusBroadcastTimer;
 	inline static float m_voteTime = 10.0f;
 };

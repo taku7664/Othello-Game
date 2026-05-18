@@ -31,6 +31,7 @@ private:
     void Handle_C2S_JoinRequest(Connection& connection, PacketHeader header, const Packet::C2S_JoinRequest* body);
     void Handle_C2S_LeaveRequest(Connection& connection, PacketHeader header, const Packet::C2S_LeaveRequest* body);
     void Handle_C2S_PlaceStone(Connection& connection, PacketHeader header, const Packet::C2S_PlaceStone* body);
+    void Handle_C2S_Surrender(Connection& connection, PacketHeader header, const Packet::C2S_Surrender* body);
     void Handle_Com_ChatMessage(Connection& connection, PacketHeader header, const Packet::Com_ChatMessage* body);
     void Handle_Com_PlayerRefreshed(Connection& connection, PacketHeader header, const Packet::Com_PlayerRefreshed* body);
 

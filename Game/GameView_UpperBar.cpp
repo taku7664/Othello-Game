@@ -21,6 +21,14 @@ void GameView::DrawUpperGameBar()
 			{
 				if ( ImGui::Button( "게임 취소" ) )
 				{
+					const size_t playerCount = GameCore::ActiveRoom->GetCurrentPlayerCount();
+					for ( size_t i = 0; i < playerCount; ++i )
+					{
+						if ( IPlayer* player = GameCore::ActiveRoom->GetPlayerFromIndex( i ) )
+						{
+							player->SetVoteState( VoteState::None );
+						}
+					}
 					Packet::S2C_GameStateRequest packet{
 						.State = ROOM_STATE_WAITING
 					};
@@ -63,7 +71,18 @@ void GameView::DrawUpperGameBar()
 		{
 		}
 		ImGui::SameLine();
-		ImGui::SetCursorPosX( availSize.x - buttonSize.x + spacing.x );
+		ImGui::SetCursorPosX( availSize.x - ( buttonSize.x * 2.0f ) - spacing.x );
+		{
+			ImGui::Utillity::DisableScope disableScope( !isPlaying );
+			if ( ImGui::Button( "항복" , buttonSize ) )
+			{
+				Packet::C2S_Surrender packet{
+					.Guid = local->GetGUID()
+				};
+				GameCore::ClientServer->SendPacketToServer( packet );
+			}
+		}
+		ImGui::SameLine();
 		{
 			ImGui::Utillity::DisableScope disableScope( !isPlaying );
 			if ( ImGui::Button( "무르기" , buttonSize ) )

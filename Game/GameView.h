@@ -14,7 +14,8 @@ private:
 	void ShowGame();
 	void DrawUpperGameBar();
 	void DrawMainGameBar();
-	bool DrawGameBoard(IGameBoard& board, size_t& clickedRow, size_t& clickedCol);
+	void DrawGameStatus();
+	bool DrawGameBoard(IGameBoard& board, bool canClick, size_t& clickedRow, size_t& clickedCol);
 	void DrawRoomSetting(bool isHost);
 
 	void ShowChat();

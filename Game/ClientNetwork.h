@@ -29,6 +29,7 @@ private:
 	void Handle_S2C_GameStateRequest(PacketHeader header, const Packet::S2C_GameStateRequest* body);
 	void Handle_S2C_GameStarted(PacketHeader header, const Packet::S2C_GameStarted* body);
 	void Handle_S2C_PlaceStone(PacketHeader header, const Packet::S2C_PlaceStone* body);
+	void Handle_S2C_GameStatus(PacketHeader header, const Packet::S2C_GameStatus* body);
 	void Handle_Com_Error(PacketHeader header, const Packet::Com_Error* body);
 	void Handle_Com_ChatMessage(PacketHeader header, const Packet::Com_ChatMessage* body);
 	void Handle_Com_PlayerRefreshed(PacketHeader header, const Packet::Com_PlayerRefreshed* body);

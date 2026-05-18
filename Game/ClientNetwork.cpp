@@ -190,6 +190,7 @@ void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 	PACKET_IF(S2C_GameStateRequest)
 	PACKET_IF(S2C_GameStarted)
 	PACKET_IF(S2C_PlaceStone)
+	PACKET_IF(S2C_GameStatus)
 	PACKET_IF(Com_Error)
 	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(Com_PlayerRefreshed)
@@ -283,6 +284,7 @@ void CClientNetwork::Handle_S2C_GameStateRequest( PacketHeader header , const Pa
 	{
 		if ( GameCore::ActiveRoom )
 		{
+			GameCore::ActiveRoom->CancelGame();
 		}
 		break;
 	}
@@ -316,6 +318,10 @@ void CClientNetwork::Handle_S2C_PlaceStone( PacketHeader header , const Packet::
 		{
 			board.SetCellColor( changes[ i ].Row , changes[ i ].Col , changes[ i ].Color );
 		}
+		if ( GameRoom* concreteRoom = dynamic_cast<GameRoom*>( gameRoom ) )
+		{
+			concreteRoom->ApplyPlaceStonePacket( *body );
+		}
 	}
 }
 
@@ -326,6 +332,16 @@ void CClientNetwork::Handle_S2C_GameStarted( PacketHeader header , const Packet:
 	if ( GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom ) )
 	{
 		gameRoom->ApplyGameStartedPacket( *body );
+	}
+}
+
+void CClientNetwork::Handle_S2C_GameStatus( PacketHeader header , const Packet::S2C_GameStatus* body )
+{
+	Debug::Log log( "CClientNetwork::Handle_S2C_GameStatus()" );
+
+	if ( GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom ) )
+	{
+		gameRoom->ApplyGameStatusPacket( *body );
 	}
 }
 

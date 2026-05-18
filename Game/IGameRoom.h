@@ -47,7 +47,17 @@ public:
 	/// <summary> 게임 방의 보드를 반환합니다. </summary>
 	virtual IGameBoard& GetGameBoard() = 0;
 
+	virtual ColorType GetCurrentTurnColor() const = 0;
+	virtual ColorType GetWinnerColor() const = 0;
+	virtual GameFinishReason GetFinishReason() const = 0;
+	virtual size_t GetBlackStoneCount() const = 0;
+	virtual size_t GetWhiteStoneCount() const = 0;
+	virtual size_t GetMoveCount() const = 0;
+	virtual size_t GetCycleCount() const = 0;
+	virtual float GetTurnRemainTime() const = 0;
+
 	virtual void StartGame() = 0;
+	virtual void CancelGame() = 0;
 
 	virtual IPlayer* AddPlayer(const PlayerDesc& data) = 0;
 	virtual void	 RemovePlayer(GUID guid) = 0;
