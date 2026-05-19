@@ -64,6 +64,7 @@ public:
 	void ApplyMoveInfoPacket(const Packet::S2C_PlaceStone& packet);
 	bool TryPlaceStone(GUID guid, size_t row, size_t col, std::vector<Packet::CellChange>& outChanges);
 	bool TrySurrender(GUID guid);
+	bool TryFinishGameByPlayerLeft(GUID guid);
 	void OpenUndoVotePopup(GUID proposer);
 	bool TryUndoLastMove(std::vector<Packet::CellChange>& outChanges);
 	void FillPlaceStoneStatus(Packet::S2C_PlaceStone& packet) const;

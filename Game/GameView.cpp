@@ -132,6 +132,8 @@ void GameView::DrawGameStatus()
 			return "최대 사이클에 도달했습니다.";
 		case GameFinishReason::Surrender:
 			return "항복했습니다.";
+		case GameFinishReason::PlayerLeft:
+			return "플레이어가 게임 중 퇴장했습니다.";
 		default:
 			return "";
 		}

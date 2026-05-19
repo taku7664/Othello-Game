@@ -13,6 +13,7 @@ enum class GameFinishReason
 	NoLegalMove,
 	MaxCycle,
 	Surrender,
+	PlayerLeft,
 };
 
 struct PlayerProfile

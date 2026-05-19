@@ -897,6 +897,24 @@ bool GameRoom::TrySurrender( GUID guid )
 	return true;
 }
 
+bool GameRoom::TryFinishGameByPlayerLeft( GUID guid )
+{
+	if ( m_roomState != ROOM_STATE_GAME_PLAYING )
+	{
+		return false;
+	}
+
+	IPlayer* player = GetPlayerFromGuid( guid );
+	if ( nullptr == player )
+	{
+		return false;
+	}
+
+	BroadcastSystemMessage( std::format( "{}님이 게임 중 퇴장하여 게임이 종료되었습니다.", player->GetNickName() ) );
+	FinishGame( GameFinishReason::PlayerLeft );
+	return true;
+}
+
 void GameRoom::BroadcastGameStarted()
 {
 	if ( nullptr == GameCore::HostServer )
@@ -1349,6 +1367,8 @@ const char* GameRoom::GameFinishReasonToString( GameFinishReason reason ) const
 		return "최대 사이클에 도달했습니다.";
 	case GameFinishReason::Surrender:
 		return "항복했습니다.";
+	case GameFinishReason::PlayerLeft:
+		return "플레이어가 게임 중 퇴장했습니다.";
 	default:
 		break;
 	}

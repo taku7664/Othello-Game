@@ -3,6 +3,19 @@
 
 namespace
 {
+	void BroadcastPlayerLeftGameFinish( CHostNetwork& hostNetwork, GUID guid )
+	{
+		GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom );
+		if ( nullptr == gameRoom || false == gameRoom->TryFinishGameByPlayerLeft( guid ) )
+		{
+			return;
+		}
+
+		Packet::S2C_GameStatus statusPacket;
+		gameRoom->FillGameStatus( statusPacket );
+		hostNetwork.BroadCast( statusPacket );
+	}
+
 	ColorType SelectJoinColor( const IGameRoom& room )
 	{
 		bool hasBlack = false;
@@ -161,8 +174,11 @@ bool CHostNetwork::HeartBeat()
 
 void CHostNetwork::Close()
 {
-    closesocket(m_socket);
-    m_socket = INVALID_SOCKET;
+	if ( m_socket != INVALID_SOCKET )
+	{
+		closesocket( m_socket );
+		m_socket = INVALID_SOCKET;
+	}
     m_address = {};
     for (Connection& c : m_connections)
     {
@@ -256,6 +272,7 @@ void CHostNetwork::HandleConnectionDisconnect( Connection& connection )
 {
 	if ( IPlayer* player = GameCore::GetPlayerFromConnectionID( connection.ID ) )
 	{
+		BroadcastPlayerLeftGameFinish( *this, player->GetGUID() );
 		const std::string mainCause = "Lost Connection Timeout";
 		Packet::S2C_PlayerDisConnected packet;
 		packet.Guid = player->GetGUID();
@@ -366,8 +383,11 @@ void CHostNetwork::Handle_C2S_LeaveRequest( Connection& connection , PacketHeade
 {
 	Debug::Log log( "CHostNetwork::Handle_C2S_LeaveRequest()" );
 	{
+		BroadcastPlayerLeftGameFinish( *this, body->Guid );
+		const std::string mainCause = "플레이어가 방에서 퇴장했습니다.";
 		Packet::S2C_PlayerDisConnected packet;
 		packet.Guid = body->Guid;
+		strcpy_s( packet.MainCause, mainCause.length() + 1, mainCause.c_str() );
 		for (Connection& c : m_connections)
 		{
 			c.PushPacket<Packet::S2C_PlayerDisConnected>(packet);
