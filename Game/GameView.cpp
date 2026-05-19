@@ -680,7 +680,7 @@ void GameView::DrawPlayerPopup(IPlayer* player)
 	const bool disable = GameCore::ActiveRoom && GameCore::ActiveRoom->GetRoomState() != ROOM_STATE_WAITING;
 	ImGui::Utillity::DisableScope disableScope( disable );
 
-	if ( isHost )
+	if ( false == isLocal )
 	{
 		if ( ImGui::MenuItem( "강퇴" ) )
 		{
