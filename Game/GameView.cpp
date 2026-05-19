@@ -85,8 +85,9 @@ void GameView::DrawMainGameBar()
 			IPlayer* localPlayer = GameCore::GetLocalPlayer();
 			const bool canClick = localPlayer &&
 				GameCore::ActiveRoom->GetRoomState() == ROOM_STATE_GAME_PLAYING &&
-				localPlayer->GetColorType() == GameCore::ActiveRoom->GetCurrentTurnColor();
-			if ( DrawGameBoard( board , canClick , clickedRow , clickedCol ) )
+				localPlayer->GetGUID() == GameCore::ActiveRoom->GetCurrentTurnGuid();
+			const ColorType previewColor = localPlayer ? localPlayer->GetColorType() : ColorType::None;
+			if ( DrawGameBoard( board , canClick , previewColor , clickedRow , clickedCol ) )
 			{
 				if ( GameCore::ClientServer )
 				{
@@ -118,15 +119,7 @@ void GameView::DrawGameStatus()
 	}
 
 	const auto colorName = [ ] ( ColorType color ) {
-		switch ( color )
-		{
-		case ColorType::Black:
-			return "검정";
-		case ColorType::White:
-			return "하양";
-		default:
-			return "없음";
-		}
+		return ColorTypeToString( color );
 	};
 	const auto finishReason = [ ] ( GameFinishReason reason ) {
 		switch ( reason )
@@ -143,7 +136,6 @@ void GameView::DrawGameStatus()
 			return "";
 		}
 	};
-
 	if ( room->GetRoomState() == ROOM_STATE_GAME_FINISH )
 	{
 		std::string result = std::format(
@@ -162,7 +154,7 @@ void GameView::DrawGameStatus()
 			colorName( room->GetCurrentTurnColor() ),
 			room->GetBlackStoneCount(),
 			room->GetWhiteStoneCount(),
-			( GameCore::GetLocalPlayer() && GameCore::GetLocalPlayer()->GetColorType() == room->GetCurrentTurnColor() )
+			( GameCore::GetLocalPlayer() && GameCore::GetLocalPlayer()->GetGUID() == room->GetCurrentTurnGuid() )
 				? std::to_string( ImMax( 0, static_cast<int>( std::ceil( room->GetTurnRemainTime() ) ) ) )
 				: std::string( "-" ),
 			room->GetMoveCount(),
@@ -173,7 +165,7 @@ void GameView::DrawGameStatus()
 	ImGui::Separator();
 }
 
-bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , size_t& clickedRow , size_t& clickedCol )
+bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , ColorType previewColor , size_t& clickedRow , size_t& clickedCol )
 {
 	const size_t rows = board.GetBoardRows();
 	const size_t cols = board.GetBoardCols();
@@ -185,12 +177,14 @@ bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , size_t& clicke
 	ImGuiStyle& style = ImGui::GetStyle();
 	const ImVec2 availSize = ImGui::GetContentRegionAvail();
 	const float gap = 3.0f;
-	const float cellByWidth = ( availSize.x - gap * static_cast<float>( cols - 1 ) ) / static_cast<float>( cols );
-	const float cellByHeight = ( availSize.y - gap * static_cast<float>( rows - 1 ) ) / static_cast<float>( rows );
-	const float cellSize = ImMax( 8.0f , ImMin( cellByWidth , cellByHeight ) );
+	const float gapWidth = gap * static_cast<float>( cols - 1 );
+	const float gapHeight = gap * static_cast<float>( rows - 1 );
+	const float cellByWidth = ImMax( 1.0f, availSize.x - gapWidth ) / static_cast<float>( cols );
+	const float cellByHeight = ImMax( 1.0f, availSize.y - gapHeight ) / static_cast<float>( rows );
+	const float cellSize = ImMax( 4.0f , ImMin( cellByWidth , cellByHeight ) );
 	const ImVec2 boardSize(
-		cellSize * static_cast<float>( cols ) + gap * static_cast<float>( cols - 1 ),
-		cellSize * static_cast<float>( rows ) + gap * static_cast<float>( rows - 1 )
+		cellSize * static_cast<float>( cols ) + gapWidth,
+		cellSize * static_cast<float>( rows ) + gapHeight
 	);
 	const ImVec2 startCursor = ImGui::GetCursorPos() + ImVec2(
 		ImMax( 0.0f , ( availSize.x - boardSize.x ) * 0.5f ),
@@ -198,6 +192,14 @@ bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , size_t& clicke
 	);
 
 	bool clicked = false;
+	bool hasPreview = false;
+	size_t previewRow = 0;
+	size_t previewCol = 0;
+	std::vector<Packet::CellChange> previewFlips;
+	std::vector<size_t> previewLineEndIndices;
+	std::vector<ImVec2> cellPositions( rows * cols );
+	std::vector<size_t> legalCellIndices;
+	std::vector<size_t> illegalCellIndices;
 	ImDrawList* drawList = ImGui::GetWindowDrawList();
 	ImGui::PushStyleVar( ImGuiStyleVar_ItemSpacing , ImVec2( gap , gap ) );
 	ImGui::PushStyleVar( ImGuiStyleVar_FramePadding , ImVec2( 0 , 0 ) );
@@ -209,16 +211,72 @@ bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , size_t& clicke
 	{
 		for ( size_t c = 0; c < cols; ++c )
 		{
+			const ImVec2 cellCursor = startCursor + ImVec2(
+				static_cast<float>( c ) * ( cellSize + gap ),
+				static_cast<float>( r ) * ( cellSize + gap )
+			);
+			ImGui::SetCursorPos( cellCursor );
 			ImGui::PushID( static_cast<int>( r * cols + c ) );
 			const ImVec2 screenPos = ImGui::GetCursorScreenPos();
+			cellPositions[ r * cols + c ] = screenPos;
 			const ColorType color = board.GetCellColor( r , c );
+			const bool canInteractCell = canClick && color == ColorType::None;
+			bool pressed = false;
+			if ( false == canClick )
 			{
-				ImGui::Utillity::DisableScope disableScope( !canClick || color != ColorType::None );
-				if ( ImGui::Button( "##cell" , ImVec2( cellSize , cellSize ) ) )
+				ImGui::Utillity::DisableScope disableScope( true );
+				pressed = ImGui::Button( "##cell" , ImVec2( cellSize , cellSize ) );
+			}
+			else
+			{
+				if ( color != ColorType::None )
+				{
+					ImGui::PushStyleColor( ImGuiCol_ButtonHovered , IM_COL32( 40 , 120 , 40 , 255 ) );
+					ImGui::PushStyleColor( ImGuiCol_ButtonActive , IM_COL32( 40 , 120 , 40 , 255 ) );
+				}
+				pressed = ImGui::Button( "##cell" , ImVec2( cellSize , cellSize ) );
+				if ( color != ColorType::None )
+				{
+					ImGui::PopStyleColor( 2 );
+				}
+			}
+
+			if ( canInteractCell )
+			{
+				std::vector<Packet::CellChange> flips;
+				const bool isLegalCell = CollectPreviewFlips( board , previewColor , r , c , flips );
+				if ( isLegalCell )
+				{
+					legalCellIndices.push_back( r * cols + c );
+				}
+				else
+				{
+					illegalCellIndices.push_back( r * cols + c );
+				}
+
+				if ( ImGui::IsItemHovered() )
+				{
+					hasPreview = true;
+					previewRow = r;
+					previewCol = c;
+					previewFlips = flips;
+					previewLineEndIndices.clear();
+					CollectPreviewLineEnds( board, previewColor, r, c, previewLineEndIndices );
+				}
+
+				if ( pressed && isLegalCell )
 				{
 					clicked = true;
 					clickedRow = r;
 					clickedCol = c;
+				}
+			}
+			else if ( color != ColorType::None && GameCore::ActiveRoom && ImGui::IsItemHovered( ImGuiHoveredFlags_AllowWhenDisabled ) )
+			{
+				const std::string& moveInfo = GameCore::ActiveRoom->GetCellMoveInfo( r, c );
+				if ( false == moveInfo.empty() )
+				{
+					ImGui::SetTooltip( "%s", moveInfo.c_str() );
 				}
 			}
 
@@ -237,16 +295,188 @@ bool GameView::DrawGameBoard( IGameBoard& board , bool canClick , size_t& clicke
 				}
 			}
 			ImGui::PopID();
-			if ( c + 1 < cols )
-			{
-				ImGui::SameLine();
-			}
 		}
 	}
+
+	const auto drawCellMarker = [ & ] ( size_t cellIndex , ImU32 color ) {
+		const ImVec2 screenPos = cellPositions[ cellIndex ];
+		const float markerSize = cellSize * 0.5f;
+		const ImVec2 markerMin = screenPos + ImVec2( ( cellSize - markerSize ) * 0.5f , ( cellSize - markerSize ) * 0.5f );
+		const ImVec2 markerMax = markerMin + ImVec2( markerSize , markerSize );
+		drawList->AddRectFilled( markerMin , markerMax , color );
+	};
+
+	for ( const size_t cellIndex : illegalCellIndices )
+	{
+		drawCellMarker( cellIndex , IM_COL32( 255 , 150 , 150 , 75 ) );
+	}
+	for ( const size_t cellIndex : legalCellIndices )
+	{
+		drawCellMarker( cellIndex , IM_COL32( 135 , 206 , 235 , 75 ) );
+	}
+
+	if ( hasPreview )
+	{
+		const auto drawStone = [ & ] ( size_t row , size_t col , ColorType color , ImU32 fillColor ) {
+			const ImVec2 screenPos = cellPositions[ row * cols + col ];
+			const ImVec2 center = screenPos + ImVec2( cellSize , cellSize ) * 0.5f;
+			const float radius = ( cellSize * 0.5f ) - ImMax( 3.0f , cellSize * 0.12f );
+			drawList->AddCircleFilled( center , radius , fillColor );
+			if ( color == ColorType::White )
+			{
+				drawList->AddCircle( center , radius , IM_COL32( 60 , 60 , 60 , 128 ) , 0 , 2.0f );
+			}
+		};
+
+		const ImU32 previewStoneColor = ( previewColor == ColorType::Black )
+			? IM_COL32( 20 , 20 , 20 , 128 )
+			: IM_COL32( 240 , 240 , 240 , 128 );
+		const ImVec2 previewCenter = cellPositions[ previewRow * cols + previewCol ] + ImVec2( cellSize, cellSize ) * 0.5f;
+		for ( const Packet::CellChange& flip : previewFlips )
+		{
+			drawStone( flip.Row , flip.Col , ColorType::None , IM_COL32( 60 , 140 , 255 , 128 ) );
+		}
+		for ( const size_t endIndex : previewLineEndIndices )
+		{
+			const ImVec2 endCenter = cellPositions[ endIndex ] + ImVec2( cellSize, cellSize ) * 0.5f;
+			drawList->AddLine( previewCenter, endCenter, IM_COL32( 60, 140, 255, 128 ), 3.0f );
+		}
+		drawStone( previewRow , previewCol , previewColor , previewStoneColor );
+	}
+
 	ImGui::PopStyleColor( 3 );
 	ImGui::PopStyleVar( 2 );
 
 	return clicked;
+}
+
+ColorType GameView::GetOpponentColor( ColorType color ) const
+{
+	if ( color == ColorType::Black )
+	{
+		return ColorType::White;
+	}
+	if ( color == ColorType::White )
+	{
+		return ColorType::Black;
+	}
+	return ColorType::None;
+}
+
+bool GameView::CollectPreviewFlips( IGameBoard& board , ColorType color , size_t row , size_t col , std::vector<Packet::CellChange>& outFlips ) const
+{
+	if ( color == ColorType::None || false == board.IsValidCoord( row , col ) || board.GetCellColor( row , col ) != ColorType::None )
+	{
+		return false;
+	}
+
+	const ColorType opponent = GetOpponentColor( color );
+	if ( opponent == ColorType::None )
+	{
+		return false;
+	}
+
+	const int directions[ 8 ][ 2 ] = {
+		{ -1, -1 }, { -1, 0 }, { -1, 1 },
+		{ 0, -1 },             { 0, 1 },
+		{ 1, -1 },  { 1, 0 },  { 1, 1 },
+	};
+	const int rows = static_cast<int>( board.GetBoardRows() );
+	const int cols = static_cast<int>( board.GetBoardCols() );
+	const int startRow = static_cast<int>( row );
+	const int startCol = static_cast<int>( col );
+
+	std::vector<Packet::CellChange> totalFlips;
+	for ( const auto& dir : directions )
+	{
+		std::vector<Packet::CellChange> lineFlips;
+		int r = startRow + dir[ 0 ];
+		int c = startCol + dir[ 1 ];
+		while ( r >= 0 && c >= 0 && r < rows && c < cols )
+		{
+			const ColorType cellColor = board.GetCellColor( static_cast<size_t>( r ) , static_cast<size_t>( c ) );
+			if ( cellColor == opponent )
+			{
+				lineFlips.push_back( Packet::CellChange{
+					.Row = static_cast<size_t>( r ),
+					.Col = static_cast<size_t>( c ),
+					.Color = color
+				} );
+			}
+			else if ( cellColor == color )
+			{
+				if ( false == lineFlips.empty() )
+				{
+					totalFlips.insert( totalFlips.end() , lineFlips.begin() , lineFlips.end() );
+				}
+				break;
+			}
+			else
+			{
+				break;
+			}
+
+			r += dir[ 0 ];
+			c += dir[ 1 ];
+		}
+	}
+
+	outFlips.insert( outFlips.end() , totalFlips.begin() , totalFlips.end() );
+	return false == totalFlips.empty();
+}
+
+void GameView::CollectPreviewLineEnds( IGameBoard& board , ColorType color , size_t row , size_t col , std::vector<size_t>& outEndCellIndices ) const
+{
+	if ( color == ColorType::None || false == board.IsValidCoord( row , col ) || board.GetCellColor( row , col ) != ColorType::None )
+	{
+		return;
+	}
+
+	const ColorType opponent = GetOpponentColor( color );
+	if ( opponent == ColorType::None )
+	{
+		return;
+	}
+
+	const int directions[ 8 ][ 2 ] = {
+		{ -1, -1 }, { -1, 0 }, { -1, 1 },
+		{ 0, -1 },             { 0, 1 },
+		{ 1, -1 },  { 1, 0 },  { 1, 1 },
+	};
+	const int rows = static_cast<int>( board.GetBoardRows() );
+	const int cols = static_cast<int>( board.GetBoardCols() );
+	const int startRow = static_cast<int>( row );
+	const int startCol = static_cast<int>( col );
+
+	for ( const auto& dir : directions )
+	{
+		bool hasOpponentBetween = false;
+		int r = startRow + dir[ 0 ];
+		int c = startCol + dir[ 1 ];
+		while ( r >= 0 && c >= 0 && r < rows && c < cols )
+		{
+			const ColorType cellColor = board.GetCellColor( static_cast<size_t>( r ), static_cast<size_t>( c ) );
+			if ( cellColor == opponent )
+			{
+				hasOpponentBetween = true;
+			}
+			else if ( cellColor == color )
+			{
+				if ( hasOpponentBetween )
+				{
+					outEndCellIndices.push_back( static_cast<size_t>( r ) * board.GetBoardCols() + static_cast<size_t>( c ) );
+				}
+				break;
+			}
+			else
+			{
+				break;
+			}
+
+			r += dir[ 0 ];
+			c += dir[ 1 ];
+		}
+	}
 }
 
 void GameView::DrawRoomSetting(bool isHost)
@@ -309,18 +539,18 @@ void GameView::DrawRoomSetting(bool isHost)
 		ImGui::Utillity::HoveredToolTip( "2 ~ 4 사이 값을 입력해주세요." );
 
 		ImGui::Utillity::TextWithVerticalSeparator( "보드 열 크기 (X)" , labelX );
-		if ( ImGui::InputInt( "##board_row" , &newSetting.Row , 2 ) )
+		if ( ImGui::InputInt( "##board_col" , &newSetting.Col , 2 ) )
 		{
-			newSetting.Row = newSetting.Row & ~1; // 하위비트를 버림으로써 짝수로 변경
-			newSetting.Row = ImClamp( newSetting.Row , 4 , 16 );
+			newSetting.Col = newSetting.Col & ~1; // 하위비트를 버림으로써 짝수로 변경
+			newSetting.Col = ImClamp( newSetting.Col , 4 , 16 );
 		}
 		ImGui::Utillity::HoveredToolTip( "4 ~ 16 사이 값을 입력해주세요.\n2의 배수를 입력해주세요." );
 
 		ImGui::Utillity::TextWithVerticalSeparator( "보드 행 크기 (Y)" , labelX );
-		if ( ImGui::InputInt( "##board_col" , &newSetting.Col , 2 ) )
+		if ( ImGui::InputInt( "##board_row" , &newSetting.Row , 2 ) )
 		{
-			newSetting.Col = newSetting.Col & ~1;
-			newSetting.Col = ImClamp( newSetting.Col , 4 , 16 );
+			newSetting.Row = newSetting.Row & ~1;
+			newSetting.Row = ImClamp( newSetting.Row , 4 , 16 );
 		}
 		ImGui::Utillity::HoveredToolTip( "4 ~ 16 사이 값을 입력해주세요.\n2의 배수를 입력해주세요." );
 
@@ -367,9 +597,15 @@ void GameView::DrawRoomSetting(bool isHost)
 	}
 	ImGui::PopID();
 	ImGui::Separator();
-	ImGui::PushID( "color" );
+	ImText()( "플레이어 설정" , 2.0f );
+	ImGui::Separator();
+	ImGui::PushID( "players" );
 	{
-
+		if ( GameCore::ActiveRoom )
+		{
+			DrawPlayerList();
+		}
+		//DrawPlayerPopup
 	}
 	ImGui::PopID();
 
@@ -441,7 +677,10 @@ void GameView::DrawPlayerPopup(IPlayer* player)
 	styleBuilder.PopStyle();
 	ImGui::Separator();
 
-	if ( false == isLocal )
+	const bool disable = GameCore::ActiveRoom && GameCore::ActiveRoom->GetRoomState() != ROOM_STATE_WAITING;
+	ImGui::Utillity::DisableScope disableScope( disable );
+
+	if ( isHost )
 	{
 		if ( ImGui::MenuItem( "강퇴" ) )
 		{
@@ -455,8 +694,56 @@ void GameView::DrawPlayerPopup(IPlayer* player)
 	}
 	if ( ImGui::BeginMenu( "색 변경" ) )
 	{
-		POPUP_MENUITEM_CHANGE_COLOR(ColorType::White)
-		POPUP_MENUITEM_CHANGE_COLOR(ColorType::Black)
+		POPUP_MENUITEM_CHANGE_COLOR( ColorType::White )
+		POPUP_MENUITEM_CHANGE_COLOR( ColorType::Black )
+		ImGui::EndMenu();
+	}
+	if ( ImGui::BeginMenu( "순서 변경" ) )
+	{
+		size_t currentIndex = 0;
+		const bool hasIndex = GameCore::ActiveRoom->GetPlayerIndexFromGuid( player->GetGUID(), currentIndex );
+		const size_t playerCount = GameCore::ActiveRoom->GetCurrentPlayerCount();
+		const auto movePlayer = [ player ] ( size_t newIndex ) {
+			if ( nullptr == GameCore::HostServer || nullptr == GameCore::ActiveRoom )
+			{
+				return;
+			}
+			if ( false == GameCore::ActiveRoom->MovePlayerToIndex( player->GetGUID(), newIndex ) )
+			{
+				return;
+			}
+
+			Packet::S2C_PlayerOrderChanged packet {
+				.Guid = player->GetGUID(),
+				.NewIndex = newIndex
+			};
+			GameCore::HostServer->BroadCast( packet );
+		};
+		if ( ImGui::MenuItem( "맨 위로" ) )
+		{
+			movePlayer( 0 );
+		}
+		if ( ImGui::MenuItem( "한 순서 위로" ) )
+		{
+			if ( hasIndex && currentIndex > 0 )
+			{
+				movePlayer( currentIndex - 1 );
+			}
+		}
+		if ( ImGui::MenuItem( "한 순서 아래로" ) )
+		{
+			if ( hasIndex && currentIndex + 1 < playerCount )
+			{
+				movePlayer( currentIndex + 1 );
+			}
+		}
+		if ( ImGui::MenuItem( "맨 아래로" ) )
+		{
+			if ( playerCount > 0 )
+			{
+				movePlayer( playerCount - 1 );
+			}
+		}
 		ImGui::EndMenu();
 	}
 }

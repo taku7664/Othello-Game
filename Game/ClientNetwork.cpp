@@ -187,7 +187,9 @@ void CClientNetwork::HandlePacket(PacketHeader header, const char* body)
 	std::string typeName(header.TypeName);
 	PACKET_IF(S2C_PlayerJoined)
 	PACKET_IF(S2C_PlayerDisConnected)
+	PACKET_IF(S2C_PlayerOrderChanged)
 	PACKET_IF(S2C_GameStateRequest)
+	PACKET_IF(S2C_UndoRequest)
 	PACKET_IF(S2C_GameStarted)
 	PACKET_IF(S2C_PlaceStone)
 	PACKET_IF(S2C_GameStatus)
@@ -224,6 +226,7 @@ void CClientNetwork::Handle_S2C_PlayerJoined(PacketHeader header, const Packet::
 		desc.ConnectionID = body->ConnectionID;
 		desc.Guid = body->Guid;
 		desc.Nickname = body->Nickname;
+		desc.Color = body->Color;
 		desc.IsHost = body->IsHost;
 		desc.IsLocal = (desc.Guid == GameCore::GameManager.GetGUID());
 		if(IPlayer* player = gameRoom->AddPlayer(desc))
@@ -244,6 +247,16 @@ void CClientNetwork::Handle_S2C_PlayerJoined(PacketHeader header, const Packet::
 			std::string lastError = Utillity::WCharToString( Debug::Log::GetLastMessage() );
 			GameCore::GameManager.LeaveRoom( "방 접속에 실패하셨습니다." , lastError.c_str() );
 		}
+	}
+}
+
+void CClientNetwork::Handle_S2C_PlayerOrderChanged( PacketHeader header, const Packet::S2C_PlayerOrderChanged* body )
+{
+	Debug::Log log( "CClientNetwork::Handle_S2C_PlayerOrderChanged()" );
+
+	if ( IGameRoom* gameRoom = GameCore::ActiveRoom )
+	{
+		gameRoom->MovePlayerToIndex( body->Guid, body->NewIndex );
 	}
 }
 
@@ -305,6 +318,16 @@ void CClientNetwork::Handle_S2C_GameStateRequest( PacketHeader header , const Pa
 	}
 }
 
+void CClientNetwork::Handle_S2C_UndoRequest( PacketHeader header , const Packet::S2C_UndoRequest* body )
+{
+	Debug::Log log( "CClientNetwork::Handle_S2C_UndoRequest()" );
+
+	if ( GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom ) )
+	{
+		gameRoom->OpenUndoVotePopup( body->From );
+	}
+}
+
 void CClientNetwork::Handle_S2C_PlaceStone( PacketHeader header , const Packet::S2C_PlaceStone* body )
 {
 	Debug::Log log("CClientNetwork::HandlS2C_PlaceStone()");
@@ -321,6 +344,7 @@ void CClientNetwork::Handle_S2C_PlaceStone( PacketHeader header , const Packet::
 		if ( GameRoom* concreteRoom = dynamic_cast<GameRoom*>( gameRoom ) )
 		{
 			concreteRoom->ApplyPlaceStonePacket( *body );
+			concreteRoom->ApplyMoveInfoPacket( *body );
 		}
 	}
 }

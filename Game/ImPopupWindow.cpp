@@ -9,6 +9,7 @@ CImPopupWindow::CImPopupWindow( const ImPopupDesc& desc )
 	, m_renderStayFunc( desc.OnRenderStayFunc )
 	, m_renderExitFunc( desc.OnRenderExitFunc )
 	, m_bIsRendered( false )
+	, m_bIsOpen( true )
 {
 }
 

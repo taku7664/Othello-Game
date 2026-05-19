@@ -79,6 +79,8 @@ namespace ImGui
 
 		ImVec4 ColorFromGuid( const GUID& guid );
     }
-	void RenderXMark( ImDrawList* drawList , ImVec2 min , ImVec2 max , float thickness = 2.0f );
-	void RenderCircleMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, float thickness = 2.0f);
+	void RenderXMark( ImDrawList* drawList , ImVec2 min , ImVec2 max , float thickness = 3.0f );
+	void RenderXMark( ImDrawList* drawList , ImVec2 min , ImVec2 max , ImU32 col , float thickness = 3.0f );
+	void RenderCircleMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, float thickness = 3.0f);
+	void RenderCircleMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, ImU32 col, float thickness = 3.0f);
 }

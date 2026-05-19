@@ -124,7 +124,10 @@ bool ImGui::Utillity::Checkbox(const char* label, bool* v, CheckMarkType checkTy
 			}
 			case ImGui::Utillity::CheckMarkType::X:
 			{
-				ImGui::RenderXMark(window->DrawList, check_bb.Min, check_bb.Max);
+				const float pad = ImMax( 1.0f , IM_TRUNC( square_sz / 6.0f ) );
+				ImVec2 min = check_bb.Min + ImVec2( pad , pad );
+				ImVec2 max = check_bb.Max - ImVec2( pad , pad );
+				ImGui::RenderXMark(window->DrawList, min, max);
 				break;
 			}
 			case ImGui::Utillity::CheckMarkType::Circle:
@@ -132,7 +135,7 @@ bool ImGui::Utillity::Checkbox(const char* label, bool* v, CheckMarkType checkTy
 				const float pad = ImMax(1.0f, IM_TRUNC(square_sz / 6.0f));
 				ImVec2 min = check_bb.Min + ImVec2(pad, pad);
 				ImVec2 max = check_bb.Max - ImVec2(pad, pad);
-				ImGui::RenderCircleMark(window->DrawList, min, max, 2.0f);
+				ImGui::RenderCircleMark(window->DrawList, min, max);
 				break;
 			}
 			default:
@@ -161,6 +164,16 @@ void ImGui::RenderXMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, float thic
 	);
 }
 
+void ImGui::RenderXMark( ImDrawList* drawList , ImVec2 min , ImVec2 max , ImU32 col , float thickness )
+{
+	drawList->AddLine( min , max , col , thickness );
+	drawList->AddLine(
+		ImVec2( min.x , max.y ) ,
+		ImVec2( max.x , min.y ) ,
+		col , thickness
+	);
+}
+
 void ImGui::RenderCircleMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, float thickness)
 {
 	ImU32 col = ImGui::GetColorU32(ImGuiCol_CheckMark);
@@ -169,8 +182,16 @@ void ImGui::RenderCircleMark(ImDrawList* drawList, ImVec2 min, ImVec2 max, float
 		(min.x + max.x) * 0.5f,
 		(min.y + max.y) * 0.5f
 	);
-
 	float radius = ImMin(max.x - min.x, max.y - min.y) * 0.5f - thickness;
-
 	drawList->AddCircle(center, radius, col, 0, thickness);
+}
+
+void ImGui::RenderCircleMark( ImDrawList* drawList , ImVec2 min , ImVec2 max , ImU32 col , float thickness )
+{
+	ImVec2 center = ImVec2(
+		( min.x + max.x ) * 0.5f ,
+		( min.y + max.y ) * 0.5f
+	);
+	float radius = ImMin( max.x - min.x , max.y - min.y ) * 0.5f - thickness;
+	drawList->AddCircle( center , radius , col , 0 , thickness );
 }

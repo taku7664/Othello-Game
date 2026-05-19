@@ -37,7 +37,7 @@ public:
 
 	void SetReady(bool isReady) override;
 	bool IsReady() override;
-	void SetVoteState(VoteState voteState) override;
+	void SetVoteState(VoteState voteState, bool dirty = true) override;
 	VoteState GetVoteState() override;
 
 private:

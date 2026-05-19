@@ -87,6 +87,10 @@ void GameView::DrawUpperGameBar()
 			ImGui::Utillity::DisableScope disableScope( !isPlaying );
 			if ( ImGui::Button( "무르기" , buttonSize ) )
 			{
+				Packet::C2S_UndoRequest packet{
+					.Guid = local->GetGUID()
+				};
+				GameCore::ClientServer->SendPacketToServer( packet );
 			}
 		}
 	}

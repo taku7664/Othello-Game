@@ -39,10 +39,12 @@ public:
 	IPlayer* GetPlayerFromIndex(size_t index) const override;
 	IPlayer* GetPlayerFromId(int id) const override;
 	IPlayer* GetPlayerFromGuid(GUID guid) const override;
+	bool GetPlayerIndexFromGuid(GUID guid, size_t& outIndex) const override;
 	IPlayer* GetLocalPlayer() const override;
 	IPlayer* GetHostPlayer() const override;
 
 	IGameBoard& GetGameBoard() override;
+	GUID GetCurrentTurnGuid() const override;
 	ColorType GetCurrentTurnColor() const override;
 	ColorType GetWinnerColor() const override;
 	GameFinishReason GetFinishReason() const override;
@@ -51,6 +53,7 @@ public:
 	size_t GetMoveCount() const override;
 	size_t GetCycleCount() const override;
 	float GetTurnRemainTime() const override;
+	const std::string& GetCellMoveInfo(size_t row, size_t col) const override;
 
 public:
 	void StartGame() override;
@@ -58,13 +61,17 @@ public:
 	void ApplyGameStartedPacket(const Packet::S2C_GameStarted& packet);
 	void ApplyGameStatusPacket(const Packet::S2C_GameStatus& packet);
 	void ApplyPlaceStonePacket(const Packet::S2C_PlaceStone& packet);
+	void ApplyMoveInfoPacket(const Packet::S2C_PlaceStone& packet);
 	bool TryPlaceStone(GUID guid, size_t row, size_t col, std::vector<Packet::CellChange>& outChanges);
 	bool TrySurrender(GUID guid);
+	void OpenUndoVotePopup(GUID proposer);
+	bool TryUndoLastMove(std::vector<Packet::CellChange>& outChanges);
 	void FillPlaceStoneStatus(Packet::S2C_PlaceStone& packet) const;
 	void FillGameStatus(Packet::S2C_GameStatus& packet) const;
 
 	IPlayer* AddPlayer(const PlayerDesc& data) override;
 	void RemovePlayer(GUID guid) override;
+	bool MovePlayerToIndex(GUID guid, size_t newIndex) override;
 
 private:
 	void InitializeGame();
@@ -72,14 +79,17 @@ private:
 	void BroadcastGameStatus(bool force = false);
 	void ApplyStatus(RoomState state, ColorType currentTurn, ColorType winner, GameFinishReason reason,
 		size_t moveCount, size_t cycleCount, size_t blackCount, size_t whiteCount, float turnRemainTime);
-	void TryOpenGameResultPopup(RoomState prevState, GameFinishReason prevReason);
+	void TryOpenGameResultPopup();
 	void OpenGameResultPopup();
 	bool CollectFlippedCells(ColorType color, size_t row, size_t col, std::vector<Packet::CellChange>& outFlips) const;
 	bool HasLegalMove(ColorType color) const;
+	bool HasLegalMoveForPlayer(const IPlayer& player) const;
 	bool IsBoardFull() const;
 	void CountStones();
 	void ResetTurnTimer();
 	void AdvanceTurnAfterAction();
+	Player* GetCurrentTurnPlayer() const;
+	Player* GetNextTurnPlayerFrom(GUID guid, bool* wrapped = nullptr) const;
 	void FinishGame(GameFinishReason reason);
 	void CancelGameConfirmed();
 	ColorType GetOpponentColor(ColorType color) const;
@@ -88,6 +98,7 @@ private:
 
 	void OpenVotePopup(RoomState requestState);
 	void ShowVotePopup( IImPopupWindow& wnd, RoomState requestState );
+	void ShowUndoVotePopup(IImPopupWindow& wnd, GUID proposer);
 
 	bool IsReadyAllPlayers();
 	const char* StringToCurrentRoomState();
@@ -105,7 +116,18 @@ protected:
 
 	CGameBoard m_gameBoard;
 
+	struct MoveHistory
+	{
+		GUID PrevTurnGuid = GUID_NULL;
+		ColorType PrevTurnColor = ColorType::None;
+		size_t PrevMoveCount = 0;
+		size_t PrevCycleCount = 0;
+		std::vector<Packet::CellChange> PreviousCells;
+		std::vector<std::string> PreviousMoveInfos;
+	};
+
 	float m_voteTimer;
+	GUID m_currentTurnGuid;
 	ColorType m_currentTurn;
 	ColorType m_winnerColor;
 	GameFinishReason m_finishReason;
@@ -115,5 +137,9 @@ protected:
 	size_t m_whiteStoneCount;
 	float m_turnRemainTime;
 	float m_statusBroadcastTimer;
+	bool m_gameResultPopupOpened;
+	std::vector<MoveHistory> m_moveHistory;
+	std::vector<std::string> m_cellMoveInfos;
+	inline static const std::string EmptyMoveInfo = "";
 	inline static float m_voteTime = 10.0f;
 };

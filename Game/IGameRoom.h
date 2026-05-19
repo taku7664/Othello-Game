@@ -39,6 +39,7 @@ public:
 	virtual IPlayer* GetPlayerFromId(int id) const = 0;
 	/// <summary> 게임 방의 플레이어를 GUID를 통해 반환합니다. </summary>
 	virtual IPlayer* GetPlayerFromGuid(GUID guid) const = 0;
+	virtual bool GetPlayerIndexFromGuid(GUID guid, size_t& outIndex) const = 0;
 	/// <summary> 게임 방의 로컬 플레이어를 반환합니다. </summary>
 	virtual IPlayer* GetLocalPlayer() const = 0;
 	/// <summary> 게임 방의 호스트 플레이어를 반환합니다. </summary>
@@ -47,6 +48,7 @@ public:
 	/// <summary> 게임 방의 보드를 반환합니다. </summary>
 	virtual IGameBoard& GetGameBoard() = 0;
 
+	virtual GUID GetCurrentTurnGuid() const = 0;
 	virtual ColorType GetCurrentTurnColor() const = 0;
 	virtual ColorType GetWinnerColor() const = 0;
 	virtual GameFinishReason GetFinishReason() const = 0;
@@ -55,11 +57,13 @@ public:
 	virtual size_t GetMoveCount() const = 0;
 	virtual size_t GetCycleCount() const = 0;
 	virtual float GetTurnRemainTime() const = 0;
+	virtual const std::string& GetCellMoveInfo(size_t row, size_t col) const = 0;
 
 	virtual void StartGame() = 0;
 	virtual void CancelGame() = 0;
 
 	virtual IPlayer* AddPlayer(const PlayerDesc& data) = 0;
 	virtual void	 RemovePlayer(GUID guid) = 0;
+	virtual bool	 MovePlayerToIndex(GUID guid, size_t newIndex) = 0;
 };
 

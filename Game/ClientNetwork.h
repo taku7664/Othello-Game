@@ -26,7 +26,9 @@ private:
 private:
 	void Handle_S2C_PlayerJoined(PacketHeader header, const Packet::S2C_PlayerJoined* body);
 	void Handle_S2C_PlayerDisConnected(PacketHeader header, const Packet::S2C_PlayerDisConnected* body);
+	void Handle_S2C_PlayerOrderChanged(PacketHeader header, const Packet::S2C_PlayerOrderChanged* body);
 	void Handle_S2C_GameStateRequest(PacketHeader header, const Packet::S2C_GameStateRequest* body);
+	void Handle_S2C_UndoRequest(PacketHeader header, const Packet::S2C_UndoRequest* body);
 	void Handle_S2C_GameStarted(PacketHeader header, const Packet::S2C_GameStarted* body);
 	void Handle_S2C_PlaceStone(PacketHeader header, const Packet::S2C_PlaceStone* body);
 	void Handle_S2C_GameStatus(PacketHeader header, const Packet::S2C_GameStatus* body);

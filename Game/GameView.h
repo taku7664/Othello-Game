@@ -15,7 +15,10 @@ private:
 	void DrawUpperGameBar();
 	void DrawMainGameBar();
 	void DrawGameStatus();
-	bool DrawGameBoard(IGameBoard& board, bool canClick, size_t& clickedRow, size_t& clickedCol);
+	bool DrawGameBoard(IGameBoard& board, bool canClick, ColorType previewColor, size_t& clickedRow, size_t& clickedCol);
+	ColorType GetOpponentColor(ColorType color) const;
+	bool CollectPreviewFlips(IGameBoard& board, ColorType color, size_t row, size_t col, std::vector<Packet::CellChange>& outFlips) const;
+	void CollectPreviewLineEnds(IGameBoard& board, ColorType color, size_t row, size_t col, std::vector<size_t>& outEndCellIndices) const;
 	void DrawRoomSetting(bool isHost);
 
 	void ShowChat();

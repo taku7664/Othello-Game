@@ -50,17 +50,16 @@ bool CBoardCell::BeginStone( ImVec2 center , float radius )
 
 	switch ( m_color )
 	{
+	case ColorType::None:
+		break;
 	case ColorType::Black:
 		drawList->AddCircleFilled( center , radius , IM_COL32( 20 , 20 , 20 , 255 ) );
 		break;
-
 	case ColorType::White:
 		drawList->AddCircleFilled( center , radius , IM_COL32( 240 , 240 , 240 , 255 ) );
 		drawList->AddCircle( center , radius , IM_COL32( 60 , 60 , 60 , 255 ) , 0 , 2.0f );
 		break;
 	default:
-		// 빈 칸은 아무것도 안 그리거나,
-		// 필요하면 작은 점 등을 표시 가능
 		break;
 	}
 	return false;

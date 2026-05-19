@@ -23,6 +23,10 @@ namespace Packet
 	{
 		GUID Guid = {};
 	};
+	struct C2S_UndoRequest
+	{
+		GUID Guid = {};
+	};
 
 	////////////////////////
 	/// Server to Client
@@ -32,6 +36,7 @@ namespace Packet
 		int  ConnectionID = 0;
 		GUID Guid = {};
 		char Nickname[64] = { '\0', };
+		ColorType Color = ColorType::None;
 		bool IsHost = false;
 		bool IsNew = true;
 	};
@@ -41,10 +46,19 @@ namespace Packet
 		char MainCause[64] = { '\0', };
 		char SubCause[64] = { '\0', };
 	};
+	struct S2C_PlayerOrderChanged
+	{
+		GUID Guid = {};
+		size_t NewIndex = 0;
+	};
 	struct S2C_GameStateRequest
 	{
 		GUID From = GUID_NULL;
 		RoomState State = RoomState::ROOM_STATE_NONE;
+	};
+	struct S2C_UndoRequest
+	{
+		GUID From = GUID_NULL;
 	};
 	struct CellChange
 	{
@@ -56,6 +70,7 @@ namespace Packet
 	{
 		size_t Rows = 0;
 		size_t Cols = 0;
+		GUID CurrentTurnGuid = GUID_NULL;
 		ColorType CurrentTurn = ColorType::Black;
 		RoomState State = RoomState::ROOM_STATE_GAME_PLAYING;
 		ColorType Winner = ColorType::None;
@@ -70,6 +85,9 @@ namespace Packet
 	struct S2C_PlaceStone
 	{
 		GUID Guid = {};
+		size_t Row = 0;
+		size_t Col = 0;
+		GUID CurrentTurnGuid = GUID_NULL;
 		ColorType CurrentTurn = ColorType::Black;
 		RoomState State = RoomState::ROOM_STATE_GAME_PLAYING;
 		ColorType Winner = ColorType::None;
@@ -83,6 +101,7 @@ namespace Packet
 	};
 	struct S2C_GameStatus
 	{
+		GUID CurrentTurnGuid = GUID_NULL;
 		ColorType CurrentTurn = ColorType::Black;
 		RoomState State = RoomState::ROOM_STATE_GAME_PLAYING;
 		ColorType Winner = ColorType::None;

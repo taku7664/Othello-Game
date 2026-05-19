@@ -1,6 +1,34 @@
 #include "pch.h"
 #include "HostNetwork.h"
 
+namespace
+{
+	ColorType SelectJoinColor( const IGameRoom& room )
+	{
+		bool hasBlack = false;
+		bool hasWhite = false;
+		const size_t playerCount = room.GetCurrentPlayerCount();
+		for ( size_t i = 0; i < playerCount; ++i )
+		{
+			if ( const IPlayer* player = room.GetPlayerFromIndex( i ) )
+			{
+				hasBlack |= player->GetColorType() == ColorType::Black;
+				hasWhite |= player->GetColorType() == ColorType::White;
+			}
+		}
+
+		if ( false == hasBlack )
+		{
+			return ColorType::Black;
+		}
+		if ( false == hasWhite )
+		{
+			return ColorType::White;
+		}
+		return ColorType::None;
+	}
+}
+
 CHostNetwork::CHostNetwork(unsigned short port)
 	: CNetwork(port)
 	, m_socket(INVALID_SOCKET)
@@ -251,6 +279,7 @@ void CHostNetwork::HandlePacket(Connection& connection, PacketHeader header, con
 	PACKET_IF(C2S_LeaveRequest)
 	PACKET_IF(C2S_PlaceStone)
 	PACKET_IF(C2S_Surrender)
+	PACKET_IF(C2S_UndoRequest)
 	PACKET_IF(Com_ChatMessage)
 	PACKET_IF(Com_PlayerRefreshed)
 }
@@ -264,6 +293,7 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
 		size_t maxPlayerCount = gameRoom->GetRoomSetting().MaxPlayerCount;
 		if ( currPlayerCount < maxPlayerCount )
 		{
+			const ColorType joinColor = SelectJoinColor( *gameRoom );
 			/// RoomPacket
 			{
             Packet::Com_RoomRefreshed packet;
@@ -287,6 +317,7 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
 			            Packet::S2C_PlayerJoined packet;
 						packet.ConnectionID = player->GetConnectionID();
 			            packet.Guid = player->GetGUID();
+						packet.Color = player->GetColorType();
 			            packet.IsHost = player->IsHost();
 			            packet.IsNew = false;
 			            strcpy_s(packet.Nickname,
@@ -302,6 +333,7 @@ void CHostNetwork::Handle_C2S_JoinRequest(Connection& connection, PacketHeader h
 				Packet::S2C_PlayerJoined packet;
 				packet.ConnectionID = connection.ID;
 				packet.Guid = body->Guid;
+				packet.Color = joinColor;
 				packet.IsHost = body->IsHost;
 				packet.IsNew = true;
 				strcpy_s(packet.Nickname,
@@ -363,6 +395,8 @@ void CHostNetwork::Handle_C2S_PlaceStone( Connection& connection , PacketHeader 
 	std::vector<char> buffer( bodySize );
 	Packet::S2C_PlaceStone* packet = reinterpret_cast<Packet::S2C_PlaceStone*>( buffer.data() );
 	packet->Guid = body->Guid;
+	packet->Row = body->Row;
+	packet->Col = body->Col;
 	gameRoom->FillPlaceStoneStatus( *packet );
 	packet->ChangedCount = changedCount;
 	memcpy( buffer.data() + sizeof( Packet::S2C_PlaceStone ) , changes.data() , sizeof( Packet::CellChange ) * changedCount );
@@ -385,6 +419,30 @@ void CHostNetwork::Handle_C2S_Surrender( Connection& connection , PacketHeader h
 
 	Packet::S2C_GameStatus packet;
 	gameRoom->FillGameStatus( packet );
+	BroadCast( packet );
+}
+
+void CHostNetwork::Handle_C2S_UndoRequest( Connection& connection , PacketHeader header , const Packet::C2S_UndoRequest* body )
+{
+	Debug::Log log( "CHostNetwork::Handle_C2S_UndoRequest()" );
+
+	GameRoom* gameRoom = dynamic_cast<GameRoom*>( GameCore::ActiveRoom );
+	if ( nullptr == gameRoom || gameRoom->GetRoomState() != ROOM_STATE_GAME_PLAYING )
+	{
+		return;
+	}
+
+	const size_t playerCount = gameRoom->GetCurrentPlayerCount();
+	for ( size_t i = 0; i < playerCount; ++i )
+	{
+		if ( IPlayer* player = gameRoom->GetPlayerFromIndex( i ) )
+		{
+			player->SetVoteState( player->GetGUID() == body->Guid ? VoteState::Accepted : VoteState::None, false );
+		}
+	}
+
+	Packet::S2C_UndoRequest packet;
+	packet.From = body->Guid;
 	BroadCast( packet );
 }
 

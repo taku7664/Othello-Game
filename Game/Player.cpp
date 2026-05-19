@@ -19,7 +19,7 @@ Player::Player(const PlayerDesc& data)
 	, m_bIsLocal(data.IsLocal)
 	, m_refreshFlags(REFRESH_FLAG_NONE)
 	, m_nickname(data.Nickname)
-	, m_colorType(ColorType::Black)
+	, m_colorType(data.Color)
 	, m_voteState(VoteState::None)
 {
 }
@@ -163,12 +163,15 @@ bool Player::IsReady()
 	return m_voteState == VoteState::Accepted;
 }
 
-void Player::SetVoteState( VoteState voteState )
+void Player::SetVoteState( VoteState voteState, bool dirty )
 {
 	if ( m_voteState != voteState )
 	{
 		m_voteState = voteState;
-		m_refreshFlags += REFRESH_FLAG_VOTE;
+		if ( dirty )
+		{
+			m_refreshFlags += REFRESH_FLAG_VOTE;
+		}
 	}
 }
 

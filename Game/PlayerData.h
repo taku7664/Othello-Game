@@ -37,6 +37,7 @@ struct PlayerDesc
 	int			ConnectionID = 0;
 	GUID		Guid = {};
 	std::string	Nickname;
+	ColorType	Color = ColorType::None;
 	bool		IsHost = false;
 	bool		IsLocal = false;
 };
