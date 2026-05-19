@@ -16,7 +16,6 @@ void CMasterWindow::OnCreate()
 		ImGuiWindowFlags_NoMove | 
 		ImGuiWindowFlags_NoBringToFrontOnFocus | 
 		ImGuiWindowFlags_NoNavFocus |
-		ImGuiWindowFlags_MenuBar |
 		ImGuiWindowFlags_NoDocking;
 	GetImGuiWindowFlags().Set( flags );
 
@@ -80,8 +79,6 @@ void CMasterWindow::OnRenderStay()
 		return;
 	}
 
-	ShowMenuBar();
-
 	const ImVec2 baseCursorPos = ImGui::GetCursorPos();
 	const ImVec2 frameSize = ImGui::GetContentRegionAvail();
 
@@ -110,22 +107,6 @@ void CMasterWindow::OnRenderStay()
 	else
 	{
 		ShowFrame( m_curFrame , baseCursorPos , frameSize );
-	}
-}
-
-void CMasterWindow::ShowMenuBar()
-{
-	if ( ImGui::BeginMenuBar() )
-	{
-		if(ImGui::BeginMenu( "Test" ) )
-		{
-			if ( ImGui::MenuItem( "Exit" ) )
-			{
-				GameCore::GameManager.LeaveRoom();
-			}
-			ImGui::EndMenu();
-		}
-		ImGui::EndMenuBar();
 	}
 }
 

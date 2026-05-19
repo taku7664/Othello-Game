@@ -198,7 +198,9 @@
     <ClCompile Include="GameView.cpp" />
     <ClCompile Include="GameView_PlayerListBar.cpp" />
     <ClCompile Include="GameView_UpperBar.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="IImPopupWindow.cpp" />
     <ClCompile Include="imgui_stdlib.cpp">

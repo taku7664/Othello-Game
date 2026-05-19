@@ -30,7 +30,6 @@ private:
 	void OnRenderStay() override;
 
 private:
-	void ShowMenuBar();
 	void ShowFrame(FrameType frame, const ImVec2& cursorPos, const ImVec2& frameSize);
 
 private:
